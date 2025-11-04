@@ -111,7 +111,16 @@
 
             <!-- 오른쪽: 버튼 (수직 중앙정렬됨) -->
             <div class="book-action-container">
-                <button class="btn btn-outline-primary btn-sm book-action-btn">예약</button>
+
+                <!-- ✅ 예약 버튼 (조건부 활성화) -->
+                <form>
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm book-action-btn"
+                            th:disabled="${!book.canReserve}"
+                            th:text="${book.canReserve ? '예약' : '예약불가'}">
+                        예약
+                    </button>
+                </form>
 
                 <form th:action="@{/likeBook/{id}(id=${book.id})}"
                       method="post"

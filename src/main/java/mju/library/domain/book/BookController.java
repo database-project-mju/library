@@ -1,6 +1,7 @@
 package mju.library.domain.book;
 
 import lombok.RequiredArgsConstructor;
+import mju.library.domain.book.dto.BookDetailResponse;
 import mju.library.domain.book.dto.MainPageBooksDto;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -63,9 +64,11 @@ public class BookController {
     // 도서 상세 페이지
     @GetMapping("/book/{id}")
     public String getBookDetail(@PathVariable Long id, Model model) {
-        Book book = bookService.findBookById(id);
-        model.addAttribute("book", book);
-        return "book/detail"; // templates/book/detail.html
+        // 로그인 기능 미구현 상태에서는 null 전달
+        BookDetailResponse bookDetail = bookService.getBookDetail(id, null);
+
+        model.addAttribute("book", bookDetail);
+        return "book/detail";
     }
 
 }

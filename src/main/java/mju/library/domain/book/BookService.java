@@ -1,12 +1,14 @@
 package mju.library.domain.book;
 
 import lombok.RequiredArgsConstructor;
+import mju.library.domain.book.dto.BookDetailResponse;
 import mju.library.domain.book.dto.MainPageBooksDto;
 import mju.library.domain.lending.LendingRepository;
 import mju.library.domain.lending.LendingStatus;
 import mju.library.domain.like.LikeBookRepository;
 import mju.library.domain.member.Member;
 import mju.library.domain.member.MemberRepository;
+import mju.library.domain.reservation.ReservationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ public class BookService {
     private final LendingRepository lendingRepository;
     private final LikeBookRepository likeBookRepository;
     private final MemberRepository memberRepository;
+    private final ReservationRepository reservationRepository;
 
     /**
      * 메인홈 화면
@@ -57,10 +60,37 @@ public class BookService {
     }
 
     // 도서 상세정보 확인
-    public Book findBookById(Long id) {
-        return bookRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 도서를 찾을 수 없습니다. (id: " + id + ")"));
+    @Transactional(readOnly = true)
+    public BookDetailResponse getBookDetail(Long id, Member currentMember) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("도서를 찾을 수 없습니다."));
+
+        boolean isBorrowed = lendingRepository.existsByBookAndStatus(book, LendingStatus.BORROWED);
+        boolean hasReservation = reservationRepository.existsByBook(book);
+        boolean canReserve = isBorrowed && !hasReservation;
+
+        boolean liked = (currentMember != null) &&
+                likeBookRepository.existsByMemberAndBook(currentMember, book);
+
+        String lendStatus = isBorrowed ? "대출중" : "대출가능";
+
+        return BookDetailResponse.builder()
+                .id(book.getId())
+                .title(book.getTitle())
+                .writer(book.getWriter())
+                .publisher(book.getPublisher())
+                .publishDate(book.getPublishDate())
+                .page(book.getPage())
+                .category(book.getCategory())
+                .description(book.getDescription())
+                .imageUrl(book.getImageUrl())
+                .lendStatus(lendStatus)
+                .canReserve(canReserve)
+                .liked(liked)
+                .createdAt(book.getCreatedAt())
+                .build();
     }
+
 
     /**
      * 도서 검색 기능
@@ -89,6 +119,9 @@ public class BookService {
         // 4. DTO 변환 (Lending 상태 + 찜 여부 포함)
         return bookPage.map(book -> {
             boolean isBorrowed = lendingRepository.existsByBookAndStatus(book, LendingStatus.BORROWED);
+            boolean hasReservation = reservationRepository.existsByBook(book);
+            boolean canReserve = isBorrowed && !hasReservation;
+
             String lendStatus = isBorrowed ? "대출중" : "대출가능";
 
             boolean liked = likedBookIds.contains(book.getId());
