@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update # create # TODO: 추후에 classnet mysql로 바꾼다면 none으로 변경
     properties:
       hibernate:
         format_sql: true
