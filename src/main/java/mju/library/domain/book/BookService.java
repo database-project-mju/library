@@ -7,6 +7,7 @@ import mju.library.domain.lending.LendingStatus;
 import mju.library.domain.like.LikeBookRepository;
 import mju.library.domain.member.Member;
 import mju.library.domain.member.MemberRepository;
+import mju.library.domain.reservation.ReservationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ public class BookService {
     private final LendingRepository lendingRepository;
     private final LikeBookRepository likeBookRepository;
     private final MemberRepository memberRepository;
+    private final ReservationRepository reservationRepository;
 
     /**
      * 메인홈 화면
@@ -89,6 +91,9 @@ public class BookService {
         // 4. DTO 변환 (Lending 상태 + 찜 여부 포함)
         return bookPage.map(book -> {
             boolean isBorrowed = lendingRepository.existsByBookAndStatus(book, LendingStatus.BORROWED);
+            boolean hasReservation = reservationRepository.existsByBook(book);
+            boolean canReserve = isBorrowed && !hasReservation;
+
             String lendStatus = isBorrowed ? "대출중" : "대출가능";
 
             boolean liked = likedBookIds.contains(book.getId());
