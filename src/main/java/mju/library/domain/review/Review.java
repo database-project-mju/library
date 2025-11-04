@@ -29,6 +29,6 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(length = 2000)
+    @Column(nullable = false, length = 2000) // 필수 제약 추가
     private String reviewText;
 }

@@ -11,6 +11,10 @@ import mju.library.domain.member.Member;
 
 
 @Entity
+@Table(
+        name = "like_book",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "book_id"}) // 중복 방지 제약 추가
+)
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

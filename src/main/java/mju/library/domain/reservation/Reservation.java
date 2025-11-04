@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class Reservation extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id; // Id → id (일관성 통일)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -30,6 +30,7 @@ public class Reservation extends BaseEntity {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
+    @Column(nullable = false) // 필수 제약 추가
     private LocalDateTime reservationDate;
 
 }
