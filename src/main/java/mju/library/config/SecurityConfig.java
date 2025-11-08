@@ -1,28 +1,60 @@
-// TODO: 페이지 테스트를 위해 만든 임시파일 - 해당 파일은 전부 삭제하면 됨.
 package mju.library.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 public class SecurityConfig {
 
-    /**
-     * 🧩 개발/테스트용 전체 접근 허용 설정
-     * 로그인, CSRF, 기본 인증 모두 비활성화
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()   // ✅ 모든 요청 허용
+                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/student/**").hasAnyRole("ADMIN", "STUDENT")
+                        .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.disable())       // ✅ CSRF 비활성화
-                .formLogin(form -> form.disable())  // ✅ 로그인 폼 비활성화
-                .httpBasic(basic -> basic.disable());// ✅ 기본 인증 비활성화
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(customAuthenticationSuccessHandler()) // ✅ 커스텀 핸들러 사용
+                        .failureUrl("/login?error=true")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/") // 로그아웃 후 메인페이지로 이동
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
+                )
+                .csrf(csrf -> csrf.disable());
 
         return http.build();
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    // ✅ 로그인 성공 시 권한에 따라 리다이렉트
+    @Bean
+    public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            String role = authentication.getAuthorities().iterator().next().getAuthority();
+            if (role.equals("ROLE_ADMIN")) {
+                response.sendRedirect("/admin");
+            } else {
+                response.sendRedirect("/");
+            }
+        };
     }
 }
