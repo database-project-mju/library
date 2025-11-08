@@ -1,6 +1,7 @@
 package mju.library.domain.book;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import mju.library.domain.book.dto.BookDetailResponse;
 import mju.library.domain.book.dto.MainPageBooksDto;
 import mju.library.domain.lending.LendingRepository;
@@ -23,6 +24,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class BookService {
 
     private final BookRepository bookRepository;
@@ -62,6 +64,12 @@ public class BookService {
     // 도서 상세정보 확인
     @Transactional(readOnly = true)
     public BookDetailResponse getBookDetail(Long id, Member currentMember) {
+        // 멤버 로그
+        if (currentMember != null) {
+            log.info("현재 로그인한 멤버: studentNo={}, name={}", currentMember.getStudentNo(), currentMember.getName());
+        } else {
+            log.info("로그인하지 않은 사용자 접근");
+        }
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("도서를 찾을 수 없습니다."));
 
