@@ -10,12 +10,14 @@ import mju.library.domain.member.MemberRole;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDate;
 
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
+    private final BCryptPasswordEncoder passwordEncoder; // ✅ 주입받기
 
     @Bean
     CommandLineRunner initDatabase(BookRepository bookRepository, MemberRepository memberRepository) {
@@ -26,16 +28,16 @@ public class DataInitializer {
 
             // 👩‍🎓 회원 더미데이터
             Member admin = Member.builder()
-                    .studentNo("60210021")
+                    .studentNo("admin")
                     .name("관리자")
-                    .password("1234")
+                    .password(passwordEncoder.encode("1234"))
                     .memberRole(MemberRole.ADMIN)
                     .build();
 
             Member student = Member.builder()
                     .studentNo("60210022")
                     .name("홍길동")
-                    .password("1111")
+                    .password(passwordEncoder.encode("1111"))
                     .memberRole(MemberRole.STUDENT)
                     .build();
 
