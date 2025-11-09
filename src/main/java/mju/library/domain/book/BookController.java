@@ -25,12 +25,17 @@ public class BookController {
      * - 인기 도서 (좋아요순 4권, 대출순 4권)
      */
     @GetMapping("/")
-    public String home(Model model) {
+    public String home(@LoginMember Member member, Model model) {
         MainPageBooksDto mainBooks = bookService.getMainPageBooks();
 
         model.addAttribute("recentBooks", mainBooks.getRecentBooks());
         model.addAttribute("popularByLikes", mainBooks.getPopularByLikes());
         model.addAttribute("popularByLending", mainBooks.getPopularByLending());
+
+        // 로그인된 사용자 정보 전달
+        if (member != null) {
+            model.addAttribute("memberName", member.getName());
+        }
 
         return "home"; // templates/home.html
     }

@@ -41,8 +41,9 @@
             <!-- ✅ 로그인한 경우 -->
             <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
 
-                <!-- 사용자 이름 표시 -->
-                <span class="text-white small" sec:authentication="name"></span>
+                <!-- ✅ 학번 대신 이름 표시 -->
+                <span th:text="'안녕하세요, ' + ${memberName} + '님'"
+                      class="text-white fw-semibold small"></span>
 
                 <!-- 관리자 전용 버튼 -->
                 <a sec:authorize="hasRole('ADMIN')"
