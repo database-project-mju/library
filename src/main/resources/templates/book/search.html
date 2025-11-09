@@ -122,18 +122,14 @@
                     </button>
                 </form>
 
-                <form th:action="@{/likeBook/{id}(id=${book.id})}"
-                      method="post"
-                      th:if="${!book.liked}">
-                    <button type="submit" class="btn btn-outline-danger btn-sm book-action-btn">🤍 찜</button>
-                </form>
-
-                <form th:action="@{/likeBook/{id}(id=${book.id})}"
-                      method="post"
-                      th:if="${book.liked}">
-                    <input type="hidden" name="_method" value="delete"/>
-                    <button type="submit" class="btn btn-danger btn-sm book-action-btn">❤️ 찜</button>
-                </form>
+                <!-- ❤️ 찜 버튼 AJAX -->
+                <button type="button"
+                        class="btn btn-sm book-action-btn like-btn"
+                        th:data-book-id="${book.id}"
+                        th:data-liked="${book.liked}"
+                        th:classappend="${book.liked} ? 'btn-danger' : 'btn-outline-danger'"
+                        th:text="${book.liked} ? '❤️ 찜' : '🤍 찜'">
+                </button>
             </div>
         </div>
     </div>
@@ -163,3 +159,49 @@
 
 </body>
 </html>
+
+<script> // 찜 토글 - AJAX(Fetch API)로 요청
+document.addEventListener("DOMContentLoaded", () => {
+    const likeButtons = document.querySelectorAll(".like-btn");
+
+    likeButtons.forEach(btn => {
+        btn.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            const bookId = button.dataset.bookId;
+            const liked = button.dataset.liked === "true";
+
+            try {
+                const response = await fetch(`/likeBook/${bookId}`, {
+                    method: liked ? "DELETE" : "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                if (response.ok) {
+                    // ✅ 찜 상태 즉시 토글 (UI만 변경)
+                    if (liked) {
+                        button.dataset.liked = "false";
+                        button.classList.remove("btn-danger");
+                        button.classList.add("btn-outline-danger");
+                        button.textContent = "🤍 찜";
+                    } else {
+                        button.dataset.liked = "true";
+                        button.classList.remove("btn-outline-danger");
+                        button.classList.add("btn-danger");
+                        button.textContent = "❤️ 찜";
+                    }
+                } else if (response.status === 401) {
+                    alert("로그인 후 이용해주세요.");
+                    window.location.href = "/login";
+                } else {
+                    alert("찜 처리 중 오류가 발생했습니다.");
+                }
+            } catch (e) {
+                console.error("찜 요청 실패:", e);
+                alert("서버와의 통신 중 오류가 발생했습니다.");
+            }
+        });
+    });
+});
+</script>

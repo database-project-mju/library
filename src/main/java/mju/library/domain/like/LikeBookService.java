@@ -17,11 +17,9 @@ public class LikeBookService {
     private final LikeBookRepository likeBookRepository;
     private final MemberRepository memberRepository;
 
-    public void addLike(Long memberId, Long bookId) {
+    public void addLike(Member member, Long bookId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("도서를 찾을 수 없습니다."));
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         if (!likeBookRepository.existsByMemberAndBook(member, book)) {
             LikeBook likeBook = LikeBook.builder()
@@ -32,7 +30,7 @@ public class LikeBookService {
         }
     }
 
-    public void removeLike(Long memberId, Long bookId) {
-        likeBookRepository.deleteByMemberIdAndBookId(memberId, bookId);
+    public void removeLike(Member member, Long bookId) {
+        likeBookRepository.deleteByMemberIdAndBookId(member.getId(), bookId);
     }
 }

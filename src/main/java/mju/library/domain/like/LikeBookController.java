@@ -1,6 +1,11 @@
 package mju.library.domain.like;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import mju.library.domain.member.Member;
+import mju.library.global.auth.annotation.LoginMember;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,18 +18,26 @@ public class LikeBookController {
 
     // ❤️ 찜 추가
     @PostMapping("/{bookId}")
-    public String likeBook(@PathVariable Long bookId) {
-        // TODO: 로그인 구현 후 실제 로그인된 memberId 가져오기
-        Long memberId = 1L;
-        likeBookService.addLike(memberId, bookId);
-        return "redirect:/book/search";
+    public ResponseEntity likeBook(@PathVariable Long bookId,
+                           @LoginMember Member member,
+                           HttpServletRequest request) {
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        likeBookService.addLike(member, bookId);
+        return ResponseEntity.ok().build();
     }
 
     // 🤍 찜 취소
     @DeleteMapping("/{bookId}")
-    public String unlikeBook(@PathVariable Long bookId) {
-        Long memberId = 1L;
-        likeBookService.removeLike(memberId, bookId);
-        return "redirect:/book/search";
+    public ResponseEntity unlikeBook(@PathVariable Long bookId,
+                             @LoginMember Member member,
+                             HttpServletRequest request) {
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        likeBookService.removeLike(member, bookId);
+        return ResponseEntity.ok().build();
     }
 }

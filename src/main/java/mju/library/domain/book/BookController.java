@@ -47,13 +47,13 @@ public class BookController {
     public String searchBooks(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
+            @LoginMember Member member,
             Model model
     ) {
         Pageable pageable = PageRequest.of(page, 8);
 
         try {
-            // 로그인 기능이 아직 없으므로 null 전달
-            Page<BookSearchResponse> results = bookService.searchBooks(keyword, pageable, null);
+            Page<BookSearchResponse> results = bookService.searchBooks(keyword, pageable, member); // ✅ 로그인 정보 전달
 
             model.addAttribute("searchResults", results.getContent());
             model.addAttribute("currentPage", page);
@@ -63,6 +63,11 @@ public class BookController {
 
         } catch (IllegalArgumentException e) {
             model.addAttribute("message", e.getMessage());
+        }
+
+        // 로그인된 사용자 정보 전달 - nav에 띄울 이름
+        if (member != null) {
+            model.addAttribute("memberName", member.getName());
         }
 
         return "book/search";
@@ -77,6 +82,12 @@ public class BookController {
         BookDetailResponse bookDetail = bookService.getBookDetail(id, member);
 
         model.addAttribute("book", bookDetail);
+
+        // 로그인된 사용자 정보 전달 - nav에 띄울 이름
+        if (member != null) {
+            model.addAttribute("memberName", member.getName());
+        }
+
         return "book/detail";
     }
 
