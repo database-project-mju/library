@@ -4,29 +4,47 @@ import lombok.RequiredArgsConstructor;
 import mju.library.domain.book.Book;
 import mju.library.domain.book.BookRepository;
 import mju.library.domain.book.Category;
+import mju.library.domain.lending.Lending;
+import mju.library.domain.lending.LendingRepository;
+import mju.library.domain.lending.LendingStatus;
+import mju.library.domain.like.LikeBook;
+import mju.library.domain.like.LikeBookRepository;
 import mju.library.domain.member.Member;
 import mju.library.domain.member.MemberRepository;
 import mju.library.domain.member.MemberRole;
+import mju.library.domain.reservation.Reservation;
+import mju.library.domain.reservation.ReservationRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
-    private final BCryptPasswordEncoder passwordEncoder; // ✅ 주입받기
+
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Bean
-    CommandLineRunner initDatabase(BookRepository bookRepository, MemberRepository memberRepository) {
+    CommandLineRunner initDatabase(BookRepository bookRepository,
+                                   MemberRepository memberRepository,
+                                   LendingRepository lendingRepository,
+                                   LikeBookRepository likeBookRepository,
+                                   ReservationRepository reservationRepository) {
         return args -> {
 
             // 🚀 이미 데이터가 있으면 중복 삽입 방지
-            if (bookRepository.count() > 0) return;
+            if (bookRepository.count() > 0) {
+                System.out.println("ℹ️ 이미 초기 데이터가 존재합니다. 삽입을 건너뜁니다.");
+                return;
+            }
 
-            // 👩‍🎓 회원 더미데이터
+            /* -----------------------------------
+             👩‍🎓 회원 더미 데이터
+             ----------------------------------- */
             Member admin = Member.builder()
                     .studentNo("admin")
                     .name("관리자")
@@ -34,17 +52,27 @@ public class DataInitializer {
                     .memberRole(MemberRole.ADMIN)
                     .build();
 
-            Member student = Member.builder()
+            Member student1 = Member.builder()
                     .studentNo("60210022")
                     .name("홍길동")
                     .password(passwordEncoder.encode("1111"))
                     .memberRole(MemberRole.STUDENT)
                     .build();
 
-            memberRepository.save(admin);
-            memberRepository.save(student);
+            Member student2 = Member.builder()
+                    .studentNo("60210033")
+                    .name("김철수")
+                    .password(passwordEncoder.encode("2222"))
+                    .memberRole(MemberRole.STUDENT)
+                    .build();
 
-            // 📚 도서 더미데이터
+            memberRepository.save(admin);
+            memberRepository.save(student1);
+            memberRepository.save(student2);
+
+            /* -----------------------------------
+             📚 도서 더미 데이터
+             ----------------------------------- */
             for (int i = 1; i <= 20; i++) {
                 Book book = Book.builder()
                         .isbn("978-12345-" + i)
@@ -52,24 +80,62 @@ public class DataInitializer {
                         .writer("저자 " + i)
                         .publisher("출판사 " + i)
                         .publishDate(LocalDate.of(2020 + (i % 3), 5, 10))
-                        .description("이것은 더미 설명입니다." +
-                                "돈은 법인보다 더 정교하고 구체적인 인격체다. 어떤 돈은 사람과 같이 어울리기 좋아하고 몰려다니며," +
-                                "어떤 돈은 숨어서 평생을 지내기도 한다. 자기들끼리 주로 가는 곳이 따로 있고 유행에 따라 모이고 흩어진다." +
-                                "자기를 소중히 여기는 사람에게 붙어 있기를 좋아하고, 함부로 대하는 사람에겐 패가망신의 보복을 퍼붓기도 한다." +
-                                "작은 돈을 함부로 하는 사람에게선 큰돈이 몰려서 떠나고 자신에게 합당한 대우를 하는 사람 곁에서는 자식(이자)을 낳기도 한다." +
-                                " (19쪽)비정규적인 수입은 한 번에 몰려온 돈이라 실제 가치보다 커 보이는 착각을 일으킨다. 그래서 자신이 많은 돈을 벌게 된 줄 알" +
-                                "고 사치하고 함부로 사용하게 돼 결국 모으지 못하게 된다. 흔한 생각으론 돈이 또 언제 들어올지 모르니 저축을 해가며 살 것" +
-                                " 같아도 실제로 그렇게 조정하는 사람은 별로 없다. (34쪽)재산 증식 과정을 보면 1, 2, 3, 4, 5처럼 양의 정수(자연수)로 " +
-                                "늘어나는 것이 아니라, 1, 2, 4, 8, 16과 같이 배수로 늘어난다. 이 원리를 이해하면 누구나 부자가 될 수 있다. (39쪽)" + i)
+                        .description("이것은 더미 설명입니다. (테스트용)" + i)
                         .page(200 + i)
                         .imageUrl("/images/book" + i + ".jpg")
                         .category(Category.values()[i % Category.values().length])
                         .build();
-
                 bookRepository.save(book);
             }
 
-            System.out.println("✅ 초기 더미데이터 삽입 완료!");
+            /* -----------------------------------
+             📖 대출 / 예약 / 찜 테스트 데이터
+             ----------------------------------- */
+
+            // 1️⃣ student2 → 도서 1,2,3 대출 중
+            for (long i = 1; i <= 3; i++) {
+                Book borrowedBook = bookRepository.findById(i).orElseThrow();
+                Lending lending = Lending.builder()
+                        .book(borrowedBook)
+                        .member(student2)
+                        .lendDate(LocalDateTime.now().minusDays(3))
+                        .dueDate(LocalDateTime.now().plusDays(7))
+                        .status(LendingStatus.BORROWED)
+                        .build();
+                lendingRepository.save(lending);
+            }
+
+            // 2️⃣ student1 → 도서 1번 예약
+            Book reservedBook = bookRepository.findById(1L).orElseThrow();
+            Reservation reservation = Reservation.builder()
+                    .book(reservedBook)
+                    .member(student1)
+                    .reservationDate(LocalDateTime.now())
+                    .build();
+            reservationRepository.save(reservation);
+
+            // 3️⃣ student1 → 도서 5,6 찜
+            for (long bookId : new long[]{5L, 6L}) {
+                Book likedBook = bookRepository.findById(bookId).orElseThrow();
+                LikeBook likeBook = LikeBook.builder()
+                        .member(student1)
+                        .book(likedBook)
+                        .build();
+                likeBookRepository.save(likeBook);
+            }
+
+            /* -----------------------------------
+             ✅ 콘솔 출력
+             ----------------------------------- */
+            System.out.println("✅ 초기 데이터 삽입 완료!");
+            System.out.println("👩‍💻 로그인 테스트 계정");
+            System.out.println(" - 관리자 ID: admin / PW: 1234");
+            System.out.println(" - 학생1 ID: 60210022 / PW: 1111");
+            System.out.println(" - 학생2 ID: 60210033 / PW: 2222");
+            System.out.println("📘 테스트 시나리오");
+            System.out.println(" - [도서1~3]: student2이 대출 중");
+            System.out.println(" - [도서1]: student1가 예약 중 → 예약 버튼 비활성화");
+            System.out.println(" - [도서5,6]: student1이 찜함 → ❤️ 표시");
         };
     }
 }

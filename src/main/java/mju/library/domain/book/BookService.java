@@ -3,6 +3,7 @@ package mju.library.domain.book;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mju.library.domain.book.dto.BookDetailResponse;
+import mju.library.domain.book.dto.BookSearchResponse;
 import mju.library.domain.book.dto.MainPageBooksDto;
 import mju.library.domain.lending.LendingRepository;
 import mju.library.domain.lending.LendingStatus;
@@ -15,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import mju.library.domain.book.dto.BookSearchResponse;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,53 +34,60 @@ public class BookService {
     private final ReservationRepository reservationRepository;
 
     /**
-     * 메인홈 화면
-     * 최신 도서 조회, 좋아요 많은 도서, 대출 횟수 많은 도서 TOP N개 조회
+     * 🏠 메인홈 화면
+     * 최신 도서, 좋아요순, 대출순 TOP 조회
      */
-    // 최신 도서 8권 조회
     public List<Book> getRecentBooks() {
         return bookRepository.findTop8ByOrderByCreatedAtDesc();
     }
 
-    // 좋아요 많은 도서 Top4 조회
     public List<Book> getPopularBooksByLikes() {
         return bookRepository.findTopByLikeCount(PageRequest.of(0, 4));
     }
 
-    // 대출횟수 많은 도서 Top4 조회
     public List<Book> getPopularBooksByLending() {
         return bookRepository.findTopByLendingCount(PageRequest.of(0, 4));
     }
 
-    // 메인 페이지 통합 데이터 조회(추후 컨트롤러에서 한 번에 전달)
     public MainPageBooksDto getMainPageBooks() {
-        List<Book> recentBooks = getRecentBooks();
-        List<Book> popularByLikes = getPopularBooksByLikes();
-        List<Book> popularByLending = getPopularBooksByLending();
-
-        return new MainPageBooksDto(recentBooks, popularByLikes, popularByLending);
+        return new MainPageBooksDto(
+                getRecentBooks(),
+                getPopularBooksByLikes(),
+                getPopularBooksByLending()
+        );
     }
 
-    // 도서 상세정보 확인
+    /**
+     * 📖 도서 상세 페이지
+     */
     @Transactional(readOnly = true)
     public BookDetailResponse getBookDetail(Long id, Member currentMember) {
-        // 멤버 로그
         if (currentMember != null) {
             log.info("현재 로그인한 멤버: studentNo={}, name={}", currentMember.getStudentNo(), currentMember.getName());
         } else {
             log.info("로그인하지 않은 사용자 접근");
         }
+
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("도서를 찾을 수 없습니다."));
 
-        boolean isBorrowed = lendingRepository.existsByBookAndStatus(book, LendingStatus.BORROWED);
-        boolean hasReservation = reservationRepository.existsByBook(book);
-        boolean canReserve = isBorrowed && !hasReservation;
+        boolean isBorrowed = lendingRepository.existsByBookIdAndStatus(book.getId(), LendingStatus.BORROWED);
+        boolean hasReservation = reservationRepository.existsByBookId(book.getId());
 
-        boolean liked = (currentMember != null) &&
-                likeBookRepository.existsByMemberAndBook(currentMember, book);
+        // ✅ 내가 이미 대출한 책인지 확인
+        boolean isMyBorrowedBook = (currentMember != null)
+                && lendingRepository.existsByBookIdAndMemberIdAndStatus(book.getId(), currentMember.getId(), LendingStatus.BORROWED);
+
+        // ✅ 예약 가능 조건: "다른 사람이 대출 중" && "예약자 없음"
+        boolean canReserve = isBorrowed && !hasReservation && !isMyBorrowedBook;
+
+        boolean liked = (currentMember != null)
+                && likeBookRepository.existsByMemberAndBook(currentMember, book);
 
         String lendStatus = isBorrowed ? "대출중" : "대출가능";
+
+        log.info("bookId={}, isBorrowed={}, hasReservation={}, isMyBorrowedBook={}, canReserve={}",
+                book.getId(), isBorrowed, hasReservation, isMyBorrowedBook, canReserve);
 
         return BookDetailResponse.builder()
                 .id(book.getId())
@@ -99,14 +106,12 @@ public class BookService {
                 .build();
     }
 
-
     /**
-     * 도서 검색 기능
-     * 제목 또는 저자 기준 LIKE 검색 + Lending 상태 + 찜 여부 연동
+     * 🔍 도서 검색 기능
+     * 제목/저자 LIKE 검색 + Lending 상태 + 찜 여부 + 예약 가능 여부 계산
      */
     public Page<BookSearchResponse> searchBooks(String keyword, Pageable pageable, Member currentMember) {
 
-        // 1. 유효성 검사
         if (keyword == null || keyword.trim().isEmpty()) {
             throw new IllegalArgumentException("검색어를 입력하세요.");
         }
@@ -114,24 +119,27 @@ public class BookService {
             throw new IllegalArgumentException("두 글자 이상 입력하세요.");
         }
 
-        // 2. Book 검색 (LIKE 검색)
+        // 1️⃣ 도서 검색
         Page<Book> bookPage = bookRepository.findByTitleContainingIgnoreCaseOrWriterContainingIgnoreCase(
                 keyword.trim(), keyword.trim(), pageable
         );
 
-        // 3. 로그인한 사용자의 찜(bookId) 목록 조회
+        // 2️⃣ 로그인한 사용자의 찜(bookId) 목록 조회
         Set<Long> likedBookIds = (currentMember != null)
                 ? likeBookRepository.findBookIdsByMemberId(currentMember.getId())
                 : new HashSet<>();
 
-        // 4. DTO 변환 (Lending 상태 + 찜 여부 포함)
+        // 3️⃣ DTO 변환 (Lending 상태 + 찜 여부 + 예약 가능 여부 포함)
         return bookPage.map(book -> {
-            boolean isBorrowed = lendingRepository.existsByBookAndStatus(book, LendingStatus.BORROWED);
-            boolean hasReservation = reservationRepository.existsByBook(book);
-            boolean canReserve = isBorrowed && !hasReservation;
+            boolean isBorrowed = lendingRepository.existsByBookIdAndStatus(book.getId(), LendingStatus.BORROWED);
+            boolean hasReservation = reservationRepository.existsByBookId(book.getId());
+
+            boolean isMyBorrowedBook = (currentMember != null)
+                    && lendingRepository.existsByBookIdAndMemberIdAndStatus(book.getId(), currentMember.getId(), LendingStatus.BORROWED);
+
+            boolean canReserve = isBorrowed && !hasReservation && !isMyBorrowedBook;
 
             String lendStatus = isBorrowed ? "대출중" : "대출가능";
-
             boolean liked = likedBookIds.contains(book.getId());
 
             return BookSearchResponse.builder()
@@ -143,6 +151,7 @@ public class BookService {
                     .imageUrl(book.getImageUrl())
                     .description(book.getDescription())
                     .lendStatus(lendStatus)
+                    .canReserve(canReserve)
                     .liked(liked)
                     .build();
         });
