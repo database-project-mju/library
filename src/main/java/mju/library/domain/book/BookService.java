@@ -11,6 +11,9 @@ import mju.library.domain.like.LikeBookRepository;
 import mju.library.domain.member.Member;
 import mju.library.domain.member.MemberRepository;
 import mju.library.domain.reservation.ReservationRepository;
+import mju.library.domain.review.Review;
+import mju.library.domain.review.ReviewService;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,7 @@ public class BookService {
     private final LikeBookRepository likeBookRepository;
     private final MemberRepository memberRepository;
     private final ReservationRepository reservationRepository;
+    private final ReviewService reviewService;
 
     /**
      * 🏠 메인홈 화면
@@ -86,8 +91,12 @@ public class BookService {
 
         String lendStatus = isBorrowed ? "대출중" : "대출가능";
 
+        List<Review> reviews = reviewService.getReviewsByBook(id);
+
+
         log.info("bookId={}, isBorrowed={}, hasReservation={}, isMyBorrowedBook={}, canReserve={}",
                 book.getId(), isBorrowed, hasReservation, isMyBorrowedBook, canReserve);
+        
 
         return BookDetailResponse.builder()
                 .id(book.getId())
@@ -103,6 +112,7 @@ public class BookService {
                 .canReserve(canReserve)
                 .liked(liked)
                 .createdAt(book.getCreatedAt())
+                .reviews(reviews)
                 .build();
     }
 
@@ -155,5 +165,50 @@ public class BookService {
                     .liked(liked)
                     .build();
         });
+    }
+
+    // (R) 관리자용 '도서 목록 조회' 메서드 추가 (학생용 searchBooks와 달리, keyword가 없으면 전체 조회를 실행)
+    @Transactional(readOnly = true)
+    public Page<Book> adminSearchBooks(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // 1. 검색어가 있으면 -> 팀원이 만든 검색 기능 사용
+            return bookRepository.findByTitleContainingIgnoreCaseOrWriterContainingIgnoreCase(keyword, keyword, pageable);
+        } else {
+            // 2. 검색어가 없으면 -> JpaRepository의 기본 전체 조회 사용
+            return bookRepository.findAll(pageable);
+        }
+    }
+
+    // (C) '신규 도서 수동 등록' 메서드 추가
+    @Transactional
+    public void createBook(String isbn, String title, String writer, String publisher, 
+                           LocalDate publishDate, String description, Integer page, String imageUrl, Category category) {
+        
+        // 1. 이미 등록된 책인지 ISBN으로 검사
+        if (bookRepository.existsByIsbn(isbn)) {
+            throw new IllegalArgumentException("이미 등록된 ISBN입니다.");
+        }
+
+        // 2. 폼에서 받은 정보로 Book 엔티티 생성
+        Book newBook = Book.builder()
+                .isbn(isbn)
+                .title(title)
+                .writer(writer)
+                .publisher(publisher)
+                .publishDate(publishDate)
+                .description(description)
+                .page(page)
+                .imageUrl(imageUrl)
+                .category(category)
+                .build();
+
+        // 3. DB에 저장
+        bookRepository.save(newBook);
+    }
+
+    // (R) 관리자 대시보드용 '총 도서 수' 조회 
+    @Transactional(readOnly = true)
+    public long getBookCount() {
+        return bookRepository.count();
     }
 }

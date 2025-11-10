@@ -48,4 +48,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     Page<Book> findByTitleContainingIgnoreCaseOrWriterContainingIgnoreCase(
             String title, String writer, Pageable pageable
     );
+
+    // (C) 도서 추가시 중복 검사용
+    boolean existsByIsbn(String Isbn);
 }

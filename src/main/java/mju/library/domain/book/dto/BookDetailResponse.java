@@ -5,7 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import mju.library.domain.book.Category;
+import mju.library.domain.review.Review;
 
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -30,4 +32,5 @@ public class BookDetailResponse {
     private boolean liked;       // 로그인 사용자의 찜 여부
 
     private LocalDateTime createdAt;
+    private List<Review> reviews;
 }

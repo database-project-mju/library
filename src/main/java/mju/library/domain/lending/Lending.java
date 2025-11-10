@@ -36,4 +36,9 @@ public class Lending extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private LendingStatus status;
+
+    public void returnBook() {
+        this.status = LendingStatus.RETURNED;
+        this.returnDate = LocalDateTime.now();
+    }
 }

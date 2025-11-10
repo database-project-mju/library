@@ -2,11 +2,60 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>관리자 홈</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-<h2>👑 관리자 페이지</h2>
-<p>관리자님 환영합니다!</p>
+<body class="container mt-4">
 
-<a th:href="@{/logout}">로그아웃</a>
+    <div th:replace="~{fragments/nav :: navbar}"></div>
+
+    <h1 class="mb-4">관리자 대시보드</h1>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">연체 현황</div>
+                <div class="card-body">
+                    <h2 class="card-title" th:text="${overdueCount} + '건'">0건</h2>
+                    <p class="card-text">현재 반납일이 지난 도서</p>
+                    <a href="/admin/lending" class="text-white">대출/반납 페이지 &raquo;</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">총 회원</div>
+                <div class="card-body">
+                    <h2 class="card-title" th:text="${memberCount} + '명'">0명</h2>
+                    <p class="card-text">시스템에 등록된 총 회원</p>
+                    <a href="/admin/members" class="text-white">자세히 보기 &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">총 도서</div>
+                <div class="card-body">
+                    <h2 class="card-title" th:text="${bookCount} + '권'">0권</h2>
+                    <p class="card-text">보유중인 전체 도서 수</p>
+                    <a href="/admin/books" class="text-white">자세히 보기 &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary mb-3">
+                <div class="card-header">총 리뷰</div>
+                <div class="card-body">
+                    <h2 class="card-title" th:text="${reviewCount} + '개'">0개</h2>
+                    <p class="card-text">작성된 전체 리뷰 수</p>
+                    <a href="/admin/reviews" class="text-white">자세히 보기 &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+    </div> <div th:replace="~{fragments/footer :: footer}"></div>
+
 </body>
 </html>

@@ -50,11 +50,10 @@ public class ReservationService {
      * 예약 취소
      */
     public void cancelReservation(Member member, Long bookId) {
-        Reservation reservation = reservationRepository.findAll().stream()
-                .filter(r -> r.getBook().getId().equals(bookId) && r.getMember().equals(member))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("예약 정보를 찾을 수 없습니다."));
-
+        Book book = Book.builder().id(bookId).build();
+        // findAll().stream() 대신 바로 Repository 사용
+        Reservation reservation = reservationRepository.findByMemberAndBook(member, book) 
+            .orElseThrow(() -> new IllegalArgumentException("예약 정보를 찾을 수 없습니다."));
         reservationRepository.delete(reservation);
     }
 }

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>관리자 - 대출/반납</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+
+    <h1 class="mb-4">대출 / 반납 처리</h1>
+
+    <div class="card p-3 mb-4 shadow-sm">
+        <h5 class="mb-3">1. 학생 검색</h5>
+        <form th:action="@{/admin/lending}" method="GET" class="d-flex">
+            <input type="text" name="studentNo" class="form-control me-2" 
+                   th:value="${searchedStudentNo}" placeholder="학번으로 검색" required>
+            <button type="submit" class="btn btn-primary">검색</button>
+        </form>
+        <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
+    </div>
+
+    <div th:if="${searchedStudentNo}">
+
+        <div class="card p-3 mb-4 shadow-sm">
+            <h5 class="mb-3" th:text="'2. ' + ${searchedStudentNo} + ' 님에게 도서 대출'"></h5>
+            <form th:action="@{/admin/checkout}" method="POST" class="d-flex">
+                <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
+
+                <input type="text" name="bookId" class="form-control me-2" placeholder="대출할 도서 ID (또는 ISBN) 입력" required>
+                <button type="submit" class="btn btn-success">대출 실행</button>
+            </form>
+        </div>
+
+        <div class="card p-3 shadow-sm">
+            <h5 class="mb-3" th:text="${searchedStudentNo} + ' 님의 현재 대출 목록'"></h5>
+
+            <div th:if="${#lists.isEmpty(activeLoans)}">
+                <p class="text-muted">현재 대출중인 도서가 없습니다.</p>
+            </div>
+
+            <table class="table" th:if="${!#lists.isEmpty(activeLoans)}">
+                <thead class="table-light">
+                    <tr>
+                        <th>도서 제목</th>
+                        <th>대출일</th>
+                        <th>반납 예정일</th>
+                        <th>상태</th>
+                        <th>반납</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="loan : ${activeLoans}">
+                        <td th:text="${loan.book.title}"></td>
+                        <td th:text="${#temporals.format(loan.lendDate, 'yyyy-MM-dd')}"></td>
+                        <td th:text="${#temporals.format(loan.dueDate, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <span class="badge" 
+                                  th:classappend="${loan.status == T(mju.library.domain.lending.LendingStatus).OVERDUE} ? 'bg-danger' : 'bg-warning'"
+                                  th:text="${loan.status.korean}"></span>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/checkin}" method="POST">
+                                <input type="hidden" name="lendingId" th:value="${loan.id}">
+                                <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
+                                <button type="submit" class="btn btn-primary btn-sm">반납</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    </div> <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        
+        // 2. Controller가 '임시 가방'에 보낸 "popupMessage"를 가져옴
+        var message = /*[[${popupMessage}]]*/ null;
+        
+        // 3. 만약 message가 존재하면 (null이 아니면)
+        if (message) {
+            // 4. JavaScript 팝업(alert)을 띄움
+            alert(message);
+        }
+        
+        /*]]>*/
+    </script>
+</body>
+</html>

@@ -19,7 +19,7 @@
 <div th:replace="~{fragments/nav :: navbar}"></div>
 
 <div class="container my-5 flex-grow-1">
-    <!-- 책 기본 정보 -->
+     <!-- 책 기본 정보 -->
     <div class="card shadow-sm p-4">
         <div class="row g-4">
             <!-- 책 이미지 -->
@@ -96,15 +96,40 @@
             이 책은 ...
         </p>
     </div>
-</div>
 
-<!-- ✅ 공통 footer -->
-<div th:replace="~{fragments/footer :: footer}"></div>
+    <div class="card mt-4 p-4 shadow-sm">
+        <h5 class="fw-bold text-primary mb-3">💬 리뷰</h5>
+        
+        <form th:action="@{/book/{id}/reviews(id=${book.id})}" method="POST">
+            <div class="mb-2">
+                <label for="reviewText" class="form-label">리뷰 내용</label>
+                <textarea id="reviewText" name="reviewText" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">리뷰 등록</button>
+        </form>
+        
+        <hr class="my-4">
+
+        <div th:if="${#lists.isEmpty(book.reviews)}">
+            <p class="text-muted">아직 작성된 리뷰가 없습니다.</p>
+        </div>
+        
+        <div th:each="review : ${book.reviews}">
+            <div class="mb-3">
+                <strong th:text="${review.member.name}">작성자명</strong>
+                
+                <p th:text="${review.reviewText}" class="mt-1">리뷰 내용입니다.</p>
+                
+                </div>
+            <hr>
+        </div>
+    </div>
+    </div> <div th:replace="~{fragments/footer :: footer}"></div> <!-- ✅ 공통 footer -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // ❤️ 찜 버튼 - AJAX
+    // ❤️ 찜 버튼 - AJAX (기존 코드 유지)
     document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".like-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
@@ -130,7 +155,7 @@
             });
         });
 
-        // ✅ 예약 버튼 - AJAX
+        // ✅ 예약 버튼 - AJAX (기존 코드 유지)
         document.querySelectorAll(".reserve-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const bookId = btn.dataset.bookId;

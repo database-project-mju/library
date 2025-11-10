@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>마이페이지 - 내가 쓴 리뷰</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+
+    <h1 class="mb-4">내가 쓴 리뷰</h1>
+
+    <div th:if="${#lists.isEmpty(myReviews)}">
+        <p class="text-muted">아직 작성한 리뷰가 없습니다.</p>
+    </div>
+
+    <div th:each="review : ${myReviews}" class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">
+                <a th:href="@{/book/{id}(id=${review.book.id})}" th:text="${review.book.title}">책 제목</a>
+            </h5>
+
+            <form th:id="'review-update-form-' + ${review.id}" 
+                  th:action="@{/reviews/{id}/update(id=${review.id})}" method="POST">
+
+                <textarea class="form-control" name="reviewText" rows="3" th:text="${review.reviewText}">리뷰 내용</textarea>
+
+                <button type="button" class="btn btn-danger btn-sm mt-2" th:onclick="'deleteReview(' + ${review.id} + ')'">삭제</button>
+
+                <button type="submit" class="btn btn-primary btn-sm mt-2">수정 완료</button>
+            </form>
+
+            <form th:id="'review-delete-form-' + ${review.id}" 
+                  th:action="@{/reviews/{id}/delete(id=${review.id})}" method="POST" style="display: none;">
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        function deleteReview(reviewId) {
+            if (confirm("정말로 이 리뷰를 삭제하시겠습니까?")) {
+                // "review-delete-form-{리뷰ID}" 폼을 찾아서 submit
+                document.getElementById('review-delete-form-' + reviewId).submit();
+            }
+        }
+    </script>
+</body>
+</html>
