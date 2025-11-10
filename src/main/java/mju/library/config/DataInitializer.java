@@ -14,6 +14,9 @@ import mju.library.domain.member.MemberRepository;
 import mju.library.domain.member.MemberRole;
 import mju.library.domain.reservation.Reservation;
 import mju.library.domain.reservation.ReservationRepository;
+import mju.library.domain.review.Review;
+import mju.library.domain.review.ReviewRepository;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +36,8 @@ public class DataInitializer {
                                    MemberRepository memberRepository,
                                    LendingRepository lendingRepository,
                                    LikeBookRepository likeBookRepository,
-                                   ReservationRepository reservationRepository) {
+                                   ReservationRepository reservationRepository,
+                                   ReviewRepository reviewRepository) {
         return args -> {
 
             // 🚀 이미 데이터가 있으면 중복 삽입 방지
@@ -123,6 +127,19 @@ public class DataInitializer {
                         .build();
                 likeBookRepository.save(likeBook);
             }
+
+            /* -----------------------------------
+              리뷰 테스트 데이터
+             ----------------------------------- */
+             Book reviewedBook = bookRepository.findById(4L).orElseThrow();
+             Review review1 = Review.builder()
+                    .member(student1) // 홍길동 (60210022)
+                    .book(reviewedBook) // 도서 제목 4번
+                    .reviewText("정말 감명 깊게 읽었습니다. 적극 추천합니다.")
+                    .build();
+        
+
+            reviewRepository.save(review1);
 
             /* -----------------------------------
              ✅ 콘솔 출력

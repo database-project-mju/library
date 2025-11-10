@@ -19,7 +19,7 @@ public class Review extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -31,4 +31,8 @@ public class Review extends BaseEntity {
 
     @Column(nullable = false, length = 2000) // 필수 제약 추가
     private String reviewText;
+
+    public void updateReview(String reviewText) {
+        this.reviewText = reviewText;
+    }
 }
