@@ -3,13 +3,21 @@ package mju.library.domain.reservation;
 import lombok.RequiredArgsConstructor;
 import mju.library.domain.book.Book;
 import mju.library.domain.book.BookRepository;
+import mju.library.domain.lending.Lending;
 import mju.library.domain.lending.LendingRepository;
 import mju.library.domain.lending.LendingStatus;
 import mju.library.domain.member.Member;
+import mju.library.domain.mypage.dto.LendingResDto;
+import mju.library.domain.mypage.dto.ReserveResDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -55,5 +63,34 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findByMemberAndBook(member, book) 
             .orElseThrow(() -> new IllegalArgumentException("예약 정보를 찾을 수 없습니다."));
         reservationRepository.delete(reservation);
+    }
+
+    @Transactional(readOnly = true)
+    public ReserveResDto.ReserveListDto getReserveList(Long memberId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Reservation> reserveListWithMember = reservationRepository.findByMemberIdFetch(memberId, pageable);
+
+        List<ReserveResDto.ReserveDto> reserveDto = reserveListWithMember.getContent().stream()
+                .map(l -> ReserveResDto.ReserveDto.builder()
+                        .reserveId(l.getId())
+                        .bookId(l.getBook().getId())
+                        .bookName(l.getBook().getTitle())
+                        .bookAuthor(l.getBook().getPublisher())
+                        .publisher(l.getBook().getPublisher())
+                        .imageUrl(l.getBook().getImageUrl())
+                        .publishDate(l.getBook().getPublishDate())
+                        .lendDate(LocalDate.from(l.getReservationDate()))
+                        .dueDate(LocalDate.from(l.getReservationDate().plusDays(14)))
+                        .build()
+                )
+                .toList();
+
+        return ReserveResDto.ReserveListDto.builder()
+                .totalCount((int) reserveListWithMember.getTotalElements())
+                .totalPage(reserveListWithMember.getTotalPages())
+                .currentPage(page)
+                .reserveList(reserveDto)
+                .build();
     }
 }

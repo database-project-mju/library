@@ -1,6 +1,7 @@
 package mju.library.domain.member;
 
 import lombok.RequiredArgsConstructor;
+import mju.library.domain.member.dto.MemberResDto.MemberInfoDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,5 +55,25 @@ public class MemberService {
     public long getMemberCount() {
         // JpaRepository의 기본 'count' 기능을 호출합니다.
         return memberRepository.count();
+    }
+    @Transactional(readOnly = true)
+    public MemberInfoDto getMemberInfo(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 멤버입니다."));
+        return MemberInfoDto.builder()
+                .studentNo(member.getStudentNo())
+                .name(member.getName())
+                .password(member.getPassword())
+                .build();
+    }
+
+    @Transactional
+    public void changePassword(String currentPassword, String newPassword, Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 멤버입니다."));
+        // 현재 비번 검증 → 서비스 로직
+        if (!passwordEncoder.matches(currentPassword, member.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+        }
+        member.updatePassword(passwordEncoder.encode(newPassword)); //더티체킹
+
     }
 }
