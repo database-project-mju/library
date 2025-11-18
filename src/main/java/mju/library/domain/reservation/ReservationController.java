@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,6 +46,23 @@ public class ReservationController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+
+    @DeleteMapping("")
+    public String cancelReserveWithRedirect(
+            @RequestParam Long bookId,
+            @LoginMember Member loginMember,
+            RedirectAttributes redirect
+    ) {
+        try {
+            reservationService.cancelReservation(loginMember,bookId);
+            redirect.addFlashAttribute("success", "대출이 취소되었습니다.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/mypage/reserve";
     }
 }
 
