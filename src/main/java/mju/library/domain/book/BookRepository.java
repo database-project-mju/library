@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
@@ -51,4 +52,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     // (C) 도서 추가시 중복 검사용
     boolean existsByIsbn(String Isbn);
+
+    // ISBN으로 도서를 찾는 메소드
+    Optional<Book> findByIsbn(String isbn);
 }

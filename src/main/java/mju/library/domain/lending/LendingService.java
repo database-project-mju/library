@@ -14,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,11 +54,11 @@ public class LendingService {
     }
 
     // [관리자 대출/반납] (C) 대출 처리
-    public void checkOut(String studentNo, Long bookId) {
+    @Transactional
+    public void checkOut(String studentNo, String bookIdentifier) {
         Member member = memberRepository.findByStudentNo(studentNo)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학번입니다."));
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 도서ID입니다."));
+        Book book = findBookByIdentifier(bookIdentifier);
 
         // 1. 이미 도서가 대출중인지 확인
         boolean isBorrowed = lendingRepository.existsByBookIdAndStatus(book.getId(), LendingStatus.BORROWED);
@@ -70,6 +72,38 @@ public class LendingService {
         if (currentLoanCount >= MAX_LOAN_COUNT) {
             throw new IllegalArgumentException(member.getName() + "님은 현재 " + currentLoanCount + "권을 대출 중입니다. (최대 " + MAX_LOAN_COUNT + "권)");
         }
+
+        // 3. 이 책에 대해 '대출 가능'(READY) 상태인 예약이 있는지 확인
+        //    (ReservationRepository의 findWaitingReservation 메소드를 READY 상태로 조회)
+        Optional<Reservation> readyReservationOpt = reservationRepository
+                .findWaitingReservation(book, ReservationStatus.READY);
+
+        if (readyReservationOpt.isPresent()) {
+            // 4. '대출 가능' 예약이 있다면, 지금 빌리려는 사람과 예약자가 동일인인지 확인
+            Reservation reservation = readyReservationOpt.get();
+            if (!reservation.getMember().getId().equals(member.getId())) {
+                // 4-1. 예약자와 대출자가 다르면, 대출 불가능
+                throw new IllegalArgumentException(
+                    "다른 사용자가 예약하여 대출 대기 중인 도서입니다. (예약자: "
+                    + reservation.getMember().getName() + "님)"
+                );
+            }
+            
+            // 4-2. 예약자와 대출자가 동일하면, 예약 상태를 'COMPLETED'로 변경
+            reservation.updateStatus(ReservationStatus.COMPLETED);
+            
+        } else {
+            // 5. '대출 가능' 예약은 없지만, '대기중'(WAITING)인 예약이 있는지 확인
+            //    (이 경우는 누군가 '반납'을 하지 않았는데 '대출'을 시도하는 비정상 상황)
+            Optional<Reservation> waitingReservationOpt = reservationRepository
+                .findWaitingReservation(book, ReservationStatus.WAITING);
+
+            if (waitingReservationOpt.isPresent()) {
+                // (이 로직은 1번 isBorrowed 확인으로 인해 대부분 걸러지지만,
+                //  데이터 정합성을 위해 한 번 더 확인합니다.)
+                throw new IllegalArgumentException("이미 다른 사용자가 예약(대기중) 중인 도서입니다.");
+            }
+        }
         
         // 3. 대출 기록 생성
         Lending newLending = Lending.builder()
@@ -80,6 +114,31 @@ public class LendingService {
                 .status(LendingStatus.BORROWED)
                 .build();
         lendingRepository.save(newLending);
+    }
+
+    // ID 또는 ISBN으로 도서를 찾는 헬퍼(Helper) 메소드
+    private Book findBookByIdentifier(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            throw new IllegalArgumentException("도서 ID 또는 ISBN을 입력하세요.");
+        }
+        
+        // 1. 숫자인지 아닌지 판별
+        if (identifier.matches("\\d+")) { 
+            // 2. 숫자이면 ID로 먼저 검색
+            try {
+                Long bookId = Long.parseLong(identifier);
+                Optional<Book> bookById = bookRepository.findById(bookId);
+                if (bookById.isPresent()) {
+                    return bookById.get();
+                }
+            } catch (NumberFormatException e) {
+                // (ISBN이 숫자로만 이루어진 경우 Long으로 파싱 실패할 수 있으므로, ISBN 검색으로 넘어감)
+            }
+        }
+        
+        // 3. ID 검색에 실패했거나, 숫자가 아니면 ISBN으로 검색
+        return bookRepository.findByIsbn(identifier)
+                .orElseThrow(() -> new IllegalArgumentException("'" + identifier + "'에 해당하는 도서를 찾을 수 없습니다. (ID 또는 ISBN)"));
     }
 
     //[관리자 대출/반납] (U) 반납 처리
