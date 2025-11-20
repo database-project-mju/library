@@ -2,6 +2,7 @@ package mju.library.domain.review;
 
 import mju.library.domain.book.Book;
 import mju.library.domain.member.Member;
+import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page; 
@@ -27,4 +28,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            countQuery = "SELECT COUNT(r) FROM Review r")
     Page<Review> findAllWithMemberAndBook(Pageable pageable);
 
+    Page<Review> findByMemberId(Long memberId, Pageable pageable);
 }

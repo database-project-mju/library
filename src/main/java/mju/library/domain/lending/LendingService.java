@@ -5,15 +5,20 @@ import mju.library.domain.book.Book;
 import mju.library.domain.book.BookRepository; 
 import mju.library.domain.member.Member; 
 import mju.library.domain.member.MemberRepository;
+import mju.library.domain.mypage.dto.LendingResDto;
 import mju.library.domain.reservation.Reservation;
 import mju.library.domain.reservation.ReservationRepository; 
-import mju.library.domain.reservation.ReservationStatus; 
+import mju.library.domain.reservation.ReservationStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime; 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List; 
 import java.util.Arrays; 
 import java.util.Optional;
@@ -26,7 +31,7 @@ public class LendingService {
     private final LendingRepository lendingRepository;
     private final MemberRepository memberRepository; 
     private final BookRepository bookRepository; 
-    private final ReservationRepository reservationRepository; 
+    private final ReservationRepository reservationRepository;
     private static final int MAX_LOAN_COUNT = 3;
 
     // [관리자 대시보드] (R) 연체 건수 조회
@@ -161,10 +166,46 @@ public class LendingService {
         return Optional.empty();
     }
 
-    // [관리자 연체 현황] (R) 연체중인 대출 목록 페이징 조회
     @Transactional(readOnly = true)
-    public Page<Lending> findOverdueLoans(Pageable pageable) {
-        // '연체' 상태인 것만 조회
-        return lendingRepository.findByStatus(LendingStatus.OVERDUE, pageable);
+    public LendingResDto.LendingListDto getLendList(Long memberId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Lending> lendListWithMember = lendingRepository.findByMemberIdFetch(memberId, pageable);
+
+        List<LendingResDto.LendingDto> lendingDto = lendListWithMember.getContent().stream()
+                .map(l -> LendingResDto.LendingDto.builder()
+                        .lendId(l.getId())
+                        .bookId(l.getBook().getId())
+                        .bookName(l.getBook().getTitle())
+                        .bookAuthor(l.getBook().getPublisher())
+                        .publisher(l.getBook().getPublisher())
+                        .imageUrl(l.getBook().getImageUrl())
+                        .publishDate(l.getBook().getPublishDate())
+                        .lendDate(LocalDate.from(l.getLendDate()))
+                        .dueDate(LocalDate.from(l.getDueDate()))
+                        .build()
+                )
+                .toList();
+        return LendingResDto.LendingListDto.builder()
+                .totalCount((int) lendListWithMember.getTotalElements())
+                .totalPage(lendListWithMember.getTotalPages())
+                .currentPage(page)
+                .lendingList(lendingDto)
+                .build();
+
+    }
+
+
+    @Transactional
+    public void cancelLend(Long memberId, Long lendId) {
+
+        Lending lend = lendingRepository.findByIdAndMemberId(lendId, memberId)
+                .orElseThrow(() -> new IllegalArgumentException("대출 정보를 찾을 수 없습니다."));
+
+        if (lend.getStatus().equals(LendingStatus.RETURNED)) {
+            throw new IllegalArgumentException("이미 반납된 항목은 삭제할 수 없습니다.");
+        }
+
+        lendingRepository.delete(lend);
     }
 }

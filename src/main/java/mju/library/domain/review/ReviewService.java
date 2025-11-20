@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import mju.library.domain.book.Book;
 import mju.library.domain.book.BookRepository;
 import mju.library.domain.member.Member;
+import mju.library.domain.review.dto.ReviewResDto;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -92,4 +95,32 @@ public class ReviewService {
         return reviewRepository.count();
     }
 
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResDto.ReviewDto> getMyReviewList(Long memberId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return reviewRepository.findByMemberId(memberId, pageable)
+                .map(review -> ReviewResDto.ReviewDto.builder()
+                        .reviewId(review.getId())
+                        .bookId(review.getBook().getId())
+                        .bookTitle(review.getBook().getTitle())
+                        .content(review.getReviewText())
+                        .createdDate(review.getCreatedAt().toLocalDate())
+                        .build());
+    }
+
+    @Transactional
+    public void deleteSelectedReviews(List<Long> reviewIds, Long memberId) {
+        // 본인 리뷰만 삭제하도록 검증 (권한 문제 방지)
+        List<Review> reviews = reviewRepository.findAllById(reviewIds);
+
+        for (Review review : reviews) {
+            if (!review.getMember().getId().equals(memberId)) {
+                throw new IllegalArgumentException("본인의 리뷰만 삭제할 수 있습니다.");
+            }
+        }
+
+        reviewRepository.deleteAll(reviews);
+    }
 }

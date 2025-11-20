@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>리뷰 목록</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .sidebar {
+            width: 230px;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        .sidebar .menu-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .sidebar a {
+            padding: 12px 20px;
+            display: block;
+            font-size: 1rem;
+            color: #333;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .sidebar a:hover {
+            background-color: #dbe4ff;
+            color: #0d6efd;
+        }
+
+        table th, table td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/nav :: navbar}"></div>
+
+<div class="d-flex">
+
+    <!-- ⭐ 사이드바 -->
+    <div class="sidebar">
+        <div class="menu-title">내 서재</div>
+
+        <a th:href="@{/mypage/lends}">📘 대출 목록</a>
+        <a th:href="@{/mypage/reserve}">📚 예약 목록</a>
+        <a th:href="@{/mypage/return}">🔄 반납 목록</a>
+        <a th:href="@{/mypage/like}">❤️ 찜 목록</a>
+        <a th:href="@{/mypage/review}" class="fw-bold text-primary">✏️ 리뷰 조회</a>
+
+        <div class="mt-auto p-3">
+            <a th:href="@{/mypage/myInfo}" class="btn btn-outline-primary btn-sm w-100">🔒 비밀번호 수정</a>
+        </div>
+    </div>
+
+    <!-- ⭐ 본문 영역 -->
+    <div class="container mt-4">
+
+        <h5 class="mb-3">
+            총 <span th:text="${totalReviews}"></span>개의 리뷰가 있습니다.
+        </h5>
+
+        <!-- ⭐ 선택 삭제 Form -->
+        <form th:action="@{/mypage/review/delete}" method="post" onsubmit="return validateDelete()">
+
+            <button type="submit" class="btn btn-danger mb-3"
+                    onclick="return confirm('선택한 리뷰를 삭제하시겠습니까?');">
+                선택 삭제
+            </button>
+
+            <table class="table align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="checkAll">
+                    </th>
+                    <th>리뷰 제목 / 내용</th>
+                    <th style="width: 150px;">등록일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="review : ${reviews}">
+                    <td>
+                        <input type="checkbox" class="review-check" name="reviewIds"
+                               th:value="${review.reviewId}">
+                    </td>
+                    <td>
+                        <div class="fw-semibold" th:text="${review.bookTitle}"></div>
+                        <div class="text-muted" th:text="${review.content}"></div>
+                    </td>
+                    <td th:text="${review.createdDate}"></td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- ⭐ 페이징 -->
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center">
+
+                    <!-- 이전 -->
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/mypage/review(page=${currentPage - 1})}">«</a>
+                    </li>
+
+                    <!-- 페이지 번호 -->
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, totalPages > 0 ? totalPages - 1 : 0)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{/mypage/review(page=${i})}"></a>
+                    </li>
+
+                    <!-- 다음 -->
+                    <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/mypage/review(page=${currentPage + 1})}">»</a>
+                    </li>
+
+                </ul>
+            </nav>
+
+
+        </form>
+    </div>
+</div>
+
+<script>
+    function validateDelete() {
+        const checked = document.querySelectorAll(".review-check:checked");
+
+        if (checked.length === 0) {
+            alert("삭제할 리뷰를 선택해주세요.");
+            return false; // 제출 막기
+        }
+        return true; // 제출 진행
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const all = document.getElementById("checkAll");
+        const items = document.querySelectorAll(".review-check");
+
+        all.addEventListener("change", () => {
+            items.forEach(ch => ch.checked = all.checked);
+        });
+
+        items.forEach(ch => {
+            ch.addEventListener("change", () => {
+                all.checked = [...items].every(c => c.checked);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
