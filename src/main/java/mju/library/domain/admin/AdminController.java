@@ -224,7 +224,7 @@ public class AdminController {
             @PageableDefault(size = 10, sort = "dueDate", direction = Sort.Direction.ASC) Pageable pageable,
             Model model) {
         
-        Page<Lending> overduePage = lendingService.findOverdueLoans(pageable);
+        Page<Lending> overduePage = lendingService.findOverdueLends(pageable);
         
         model.addAttribute("overduePage", overduePage);
         

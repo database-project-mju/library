@@ -166,6 +166,13 @@ public class LendingService {
         return Optional.empty();
     }
 
+    // [관리자 연체 현황] (R) 연체중인 대출 목록 페이징 조회
+    @Transactional(readOnly = true)
+    public Page<Lending> findOverdueLends(Pageable pageable) {
+        // '연체' 상태인 것만 조회
+        return lendingRepository.findByStatus(LendingStatus.OVERDUE, pageable);
+    }
+
     @Transactional(readOnly = true)
     public LendingResDto.LendingListDto getLendList(Long memberId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
