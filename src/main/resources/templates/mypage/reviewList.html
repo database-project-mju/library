@@ -37,6 +37,10 @@
             color: #0d6efd;
         }
 
+        .content-area {
+            padding: 30px;
+        }
+
         table th, table td {
             vertical-align: middle;
         }
@@ -65,75 +69,78 @@
     </div>
 
     <!-- ⭐ 본문 영역 -->
-    <div class="container mt-4">
+     <div class="content-area flex-grow-1">
 
-        <h5 class="mb-3">
-            총 <span th:text="${totalReviews}"></span>개의 리뷰가 있습니다.
-        </h5>
+        <div class="container my-4">
+            <h2 class="fw-semibold mb-4">내 리뷰 목록</h2>
+            <h5 class="mb-3">
+                총 <span th:text="${totalReviews}"></span>개의 리뷰가 있습니다.
+            </h5>
 
-        <!-- ⭐ 선택 삭제 Form -->
-        <form th:action="@{/mypage/review/delete}" method="post" onsubmit="return validateDelete()">
+            <!-- ⭐ 선택 삭제 Form -->
+            <form th:action="@{/mypage/review/delete}" method="post" onsubmit="return validateDelete()">
 
-            <button type="submit" class="btn btn-danger mb-3"
-                    onclick="return confirm('선택한 리뷰를 삭제하시겠습니까?');">
-                선택 삭제
-            </button>
+                <button type="submit" class="btn btn-danger mb-3"
+                        onclick="return confirm('선택한 리뷰를 삭제하시겠습니까?');">
+                    선택 삭제
+                </button>
 
-            <table class="table align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th style="width: 40px;">
-                        <input type="checkbox" id="checkAll">
-                    </th>
-                    <th>리뷰 제목 / 내용</th>
-                    <th style="width: 150px;">등록일</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="review : ${reviews}">
-                    <td>
-                        <input type="checkbox" class="review-check" name="reviewIds"
-                               th:value="${review.reviewId}">
-                    </td>
-                    <td>
-                        <div class="fw-semibold" th:text="${review.bookTitle}"></div>
-                        <div class="text-muted" th:text="${review.content}"></div>
-                    </td>
-                    <td th:text="${review.createdDate}"></td>
-                </tr>
-                </tbody>
-            </table>
+                <table class="table align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="checkAll">
+                        </th>
+                        <th>리뷰 제목 / 내용</th>
+                        <th style="width: 150px;">등록일</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="review : ${reviews}">
+                        <td>
+                            <input type="checkbox" class="review-check" name="reviewIds"
+                                th:value="${review.reviewId}">
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${review.bookTitle}"></div>
+                            <div class="text-muted" th:text="${review.content}"></div>
+                        </td>
+                        <td th:text="${review.createdDate}"></td>
+                    </tr>
+                    </tbody>
+                </table>
 
-            <!-- ⭐ 페이징 -->
-            <nav class="mt-3">
-                <ul class="pagination justify-content-center">
+                <!-- ⭐ 페이징 -->
+                <nav class="mt-3">
+                    <ul class="pagination justify-content-center">
 
-                    <!-- 이전 -->
-                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/mypage/review(page=${currentPage - 1})}">«</a>
-                    </li>
+                        <!-- 이전 -->
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link"
+                            th:href="@{/mypage/review(page=${currentPage - 1})}">«</a>
+                        </li>
 
-                    <!-- 페이지 번호 -->
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, totalPages > 0 ? totalPages - 1 : 0)}"
-                        th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link"
-                           th:text="${i + 1}"
-                           th:href="@{/mypage/review(page=${i})}"></a>
-                    </li>
+                        <!-- 페이지 번호 -->
+                        <li class="page-item"
+                            th:each="i : ${#numbers.sequence(0, totalPages > 0 ? totalPages - 1 : 0)}"
+                            th:classappend="${i == currentPage} ? 'active'">
+                            <a class="page-link"
+                            th:text="${i + 1}"
+                            th:href="@{/mypage/review(page=${i})}"></a>
+                        </li>
 
-                    <!-- 다음 -->
-                    <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/mypage/review(page=${currentPage + 1})}">»</a>
-                    </li>
+                        <!-- 다음 -->
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link"
+                            th:href="@{/mypage/review(page=${currentPage + 1})}">»</a>
+                        </li>
 
-                </ul>
-            </nav>
+                    </ul>
+                </nav>
 
 
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
