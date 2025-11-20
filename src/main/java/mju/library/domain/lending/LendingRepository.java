@@ -45,11 +45,13 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
                 from Lending l
                 join fetch l.book
                 where l.member.id = :memberId
+                and l.status <> 'RETURNED'
                 """,
             countQuery = """
                 select count(l)
                 from Lending l
                 where l.member.id = :memberId
+                and l.status <> 'RETURNED'
                 """
     )
     Page<Lending> findByMemberIdFetch(@Param("memberId") Long memberId, Pageable pageable);
@@ -60,4 +62,9 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
     @Query(value = "SELECT l FROM Lending l JOIN FETCH l.book JOIN FETCH l.member WHERE l.status = :status",
            countQuery = "SELECT COUNT(l) FROM Lending l WHERE l.status = :status")
     Page<Lending> findByStatus(@Param("status") LendingStatus status, Pageable pageable);
+
+    // ✅ [수정됨] 특정 학생의 '반납되지 않은(대출중/연체)' 목록을 조회 (책 정보까지 한 번에 가져옴)
+    // 이렇게 하면 Thymeleaf에서 lend.book.title을 호출해도 에러가 나지 않습니다.
+    @Query("SELECT l FROM Lending l JOIN FETCH l.book WHERE l.member.studentNo = :studentNo AND l.returnDate IS NULL")
+    List<Lending> findActiveLendsByStudentNo(@Param("studentNo") String studentNo);
 }

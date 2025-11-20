@@ -125,8 +125,8 @@ public class AdminController {
         if (studentNo != null && !studentNo.trim().isEmpty()) {
             try {
                 // 학생의 현재 대출 목록 조회
-                List<Lending> activeLoans = lendingService.findActiveLoansByMember(studentNo);
-                model.addAttribute("activeLoans", activeLoans); // 대출 목록
+                List<Lending> activeLends = lendingService.findActiveLendsByMember(studentNo);
+                model.addAttribute("activeLends", activeLends); // 대출 목록
                 model.addAttribute("searchedStudentNo", studentNo); // 검색한 학번
             } catch (IllegalArgumentException e) {
                 model.addAttribute("errorMessage", e.getMessage()); // "존재하지 않는 학번"

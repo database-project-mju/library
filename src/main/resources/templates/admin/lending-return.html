@@ -141,11 +141,11 @@
                         <h5 class="fw-bold mb-0" th:text="${searchedStudentNo} + ' 님의 현재 대출 목록'"></h5>
                     </div>
                     <div class="card-body p-0">
-                        <div th:if="${#lists.isEmpty(activeLoans)}" class="p-4 text-muted text-center">
+                        <div th:if="${#lists.isEmpty(activeLends)}" class="p-4 text-muted text-center">
                             현재 대출중인 도서가 없습니다.
                         </div>
 
-                        <table class="table table-hover mb-0" th:if="${!#lists.isEmpty(activeLoans)}">
+                        <table class="table table-hover mb-0" th:if="${!#lists.isEmpty(activeLends)}">
                             <thead class="table-light border-bottom">
                                 <tr>
                                     <th class="ps-4">도서 제목</th>
@@ -156,18 +156,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="loan : ${activeLoans}">
-                                    <td class="ps-4 fw-bold" th:text="${loan.book.title}"></td>
-                                    <td th:text="${#temporals.format(loan.lendDate, 'yyyy-MM-dd')}"></td>
-                                    <td th:text="${#temporals.format(loan.dueDate, 'yyyy-MM-dd')}"></td>
+                                <tr th:each="lend : ${activeLends}">
+                                    <td class="ps-4 fw-bold" th:text="${lend.book.title}"></td>
+                                    <td th:text="${#temporals.format(lend.lendDate, 'yyyy-MM-dd')}"></td>
+                                    <td th:text="${#temporals.format(lend.dueDate, 'yyyy-MM-dd')}"></td>
                                     <td>
                                         <span class="badge" 
-                                              th:classappend="${loan.status == T(mju.library.domain.lending.LendingStatus).OVERDUE} ? 'bg-danger' : 'bg-warning text-dark'"
-                                              th:text="${loan.status.korean}"></span>
+                                              th:classappend="${lend.status == T(mju.library.domain.lending.LendingStatus).OVERDUE} ? 'bg-danger' : 'bg-warning text-dark'"
+                                              th:text="${lend.status.korean}"></span>
                                     </td>
                                     <td class="text-center">
                                         <form th:action="@{/admin/checkin}" method="POST">
-                                            <input type="hidden" name="lendingId" th:value="${loan.id}">
+                                            <input type="hidden" name="lendingId" th:value="${lend.id}">
                                             <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
                                             <button type="submit" class="btn btn-primary btn-sm" 
                                                     onclick="return confirm('반납 처리하시겠습니까?');">반납</button>
