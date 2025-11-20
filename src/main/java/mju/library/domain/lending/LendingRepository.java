@@ -55,4 +55,10 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
     Page<Lending> findByMemberIdFetch(@Param("memberId") Long memberId, Pageable pageable);
 
     Optional<Lending> findByIdAndMemberId(Long id, Long memberId);
+
+    // (연체 현황 페이지용) 특정 상태(연체) 목록 페이징 조회
+    @Query(value = "SELECT l FROM Lending l JOIN FETCH l.book JOIN FETCH l.member WHERE l.status = :status",
+           countQuery = "SELECT COUNT(l) FROM Lending l WHERE l.status = :status")
+    Page<Lending> findByStatus(@Param("status") LendingStatus status, Pageable pageable);
+}
 }
