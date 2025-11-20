@@ -61,3 +61,4 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
            countQuery = "SELECT COUNT(l) FROM Lending l WHERE l.status = :status")
     Page<Lending> findByStatus(@Param("status") LendingStatus status, Pageable pageable);
 }
+}
