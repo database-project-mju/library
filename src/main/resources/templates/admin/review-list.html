@@ -5,58 +5,69 @@
     <title>관리자 - 리뷰 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="container mt-4">
 
-    <h1 class="mb-4">리뷰 조회 / 삭제</h1>
-    <p class="text-muted" th:text="'총 ' + ${reviewPage.totalElements} + '건의 리뷰가 있습니다.'"></p>
+<!-- ✅ 1. <body> 태그에 레이아웃 클래스 적용 -->
+<body class="bg-light d-flex flex-column min-vh-100">
 
-    <table class="table table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>도서 제목</th>
-                <th>작성자 (학번)</th>
-                <th>내용</th>
-                <th>등록일</th>
-                <th>관리</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="review : ${reviewPage.content}">
-                <td th:text="${review.id}"></td>
-                <td><a th:href="@{/book/{id}(id=${review.book.id})}" th:text="${review.book.title}"></a></td>
-                <td><span th:text="${review.member.name}"></span> (<span th:text="${review.member.studentNo}"></span>)</td>
-                <td th:text="${review.reviewText}" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></td>
-                <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd')}"></td>
-                <td>
-                    <form th:action="@{/admin/reviews/{id}/delete(id=${review.id})}" method="POST"
-                          onsubmit="return confirm('정말로 이 리뷰를 삭제하시겠습니까?');">
-                        <button type="submit" class="btn btn-danger btn-sm">삭제</button>
-                    </form>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- ✅ 2. 네비게이션 바 추가 -->
+    <div th:replace="~{fragments/nav :: navbar}"></div>
 
-    <nav th:if="${reviewPage.totalPages > 1}" class="mt-4">
-        <ul class="pagination justify-content-center">
-            
-            <li class="page-item" th:classappend="${reviewPage.first} ? 'disabled'">
-                <a class="page-link" 
-                   th:href="@{/admin/reviews(page=${reviewPage.number - 1})}">이전</a>
-            </li>
+    <!-- ✅ 3. 콘텐츠 래퍼(Wrapper) 추가 -->
+    <div class="container my-5 flex-grow-1">
 
-            <li class="page-item disabled">
-                <span class="page-link" th:text="${reviewPage.number + 1} + ' / ' + ${reviewPage.totalPages}"></span>
-            </li>
+        <h1 class="fw-semibold mb-4">리뷰 조회 / 삭제</h1>
+        <p class="text-muted" th:text="'총 ' + ${reviewPage.totalElements} + '건의 리뷰가 있습니다.'"></p>
 
-            <li class="page-item" th:classappend="${reviewPage.last} ? 'disabled'">
-                <a class="page-link" 
-                   th:href="@{/admin/reviews(page=${reviewPage.number + 1})}">다음</a>
-            </li>
-        </ul>
-    </nav>
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>도서 제목</th>
+                    <th>작성자 (학번)</th>
+                    <th>내용</th>
+                    <th>등록일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="review : ${reviewPage.content}">
+                    <td th:text="${review.id}"></td>
+                    <td><a th:href="@{/book/{id}(id=${review.book.id})}" th:text="${review.book.title}"></a></td>
+                    <td><span th:text="${review.member.name}"></span> (<span th:text="${review.member.studentNo}"></span>)</td>
+                    <td th:text="${review.reviewText}" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></td>
+                    <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd')}"></td>
+                    <td>
+                        <form th:action="@{/admin/reviews/{id}/delete(id=${review.id})}" method="POST"
+                              onsubmit="return confirm('정말로 이 리뷰를 삭제하시겠습니까?');">
+                            <button type="submit" class="btn btn-danger btn-sm">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
+        <nav th:if="${reviewPage.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                
+                <li class="page-item" th:classappend="${reviewPage.first} ? 'disabled'">
+                    <a class="page-link" 
+                       th:href="@{/admin/reviews(page=${reviewPage.number - 1})}">이전</a>
+                </li>
+
+                <li class="page-item disabled">
+                    <span class="page-link" th:text="${reviewPage.number + 1} + ' / ' + ${reviewPage.totalPages}"></span>
+                </li>
+
+                <li class="page-item" th:classappend="${reviewPage.last} ? 'disabled'">
+                    <a class="page-link" 
+                       th:href="@{/admin/reviews(page=${reviewPage.number + 1})}">다음</a>
+                </li>
+            </ul>
+        </nav>
+
+    </div> <!-- ✅ 3. 콘텐츠 래퍼 닫기 -->
+
+    <!-- ✅ 4. 푸터 추가 (<body> 닫기 직전) -->
     <div th:replace="~{fragments/footer :: footer}"></div>
 
 </body>

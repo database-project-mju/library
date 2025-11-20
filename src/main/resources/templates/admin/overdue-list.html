@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 - 연체 현황</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <div th:replace="~{fragments/nav :: navbar}"></div>
+
+    <div class="container my-5 flex-grow-1">
+
+        <h1 class="fw-semibold mb-4">연체 현황</h1>
+        <p class="text-muted" th:text="'총 ' + ${overduePage.totalElements} + '건의 연체 목록이 있습니다.'"></p>
+
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>도서 제목</th>
+                    <th>대출자 (학번)</th>
+                    <th>대출일</th>
+                    <th>반납 예정일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ✅ overduePage.content로 변경 -->
+                <tr th:each="loan : ${overduePage.content}">
+                    <td th:text="${loan.book.title}"></td>
+                    <td>
+                        <span th:text="${loan.member.name}"></span>
+                        (<span th:text="${loan.member.studentNo}"></span>)
+                    </td>
+                    <td th:text="${#temporals.format(loan.lendDate, 'yyyy-MM-dd')}"></td>
+                    <td th:text="${#temporals.format(loan.dueDate, 'yyyy-MM-dd')}"></td>
+                    <td>
+                        <!-- 대출/반납 페이지로 바로가기 링크 -->
+                        <a th:href="@{/admin/lending(studentNo=${loan.member.studentNo})}"
+                           class="btn btn-danger btn-sm">반납 처리</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ✅ 페이지네이션 링크 수정 -->
+        <nav th:if="${overduePage.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${overduePage.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/lending/overdue(page=${overduePage.number - 1})}">이전</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link" th:text="${overduePage.number + 1} + ' / ' + ${overduePage.totalPages}"></span>
+                </li>
+                <li class="page-item" th:classappend="${overduePage.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/lending/overdue(page=${overduePage.number + 1})}">다음</a>
+                </li>
+            </ul>
+        </nav>
+    
+    </div>
+    
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

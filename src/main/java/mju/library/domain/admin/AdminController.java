@@ -138,12 +138,12 @@ public class AdminController {
 
     // (C) '대출 처리' 기능 
     @PostMapping("/admin/checkout")
-    public String checkOut(@RequestParam String studentNo, @RequestParam Long bookId) {
+    public String checkOut(@RequestParam String studentNo, @RequestParam String bookIdentifier, RedirectAttributes redirectAttributes) {
 
         try {
-            lendingService.checkOut(studentNo, bookId);
+            lendingService.checkOut(studentNo, bookIdentifier);
         } catch (IllegalArgumentException e) {
-            // TODO: 에러 메시지를 FlashAttribute로 전달하여 사용자에게 보여주기
+            redirectAttributes.addFlashAttribute("checkoutError", e.getMessage());
         }
 
         return "redirect:/admin/lending?studentNo=" + studentNo;
@@ -215,5 +215,19 @@ public class AdminController {
         }
         
         return "redirect:/admin/books"; 
+    }
+
+    //  (R) '연체 현황' 페이지 조회
+    @GetMapping("/admin/lending/overdue")
+    public String getOverdueListPage(
+            // (반납기한이 오래된 순 = 오름차순)
+            @PageableDefault(size = 10, sort = "dueDate", direction = Sort.Direction.ASC) Pageable pageable,
+            Model model) {
+        
+        Page<Lending> overduePage = lendingService.findOverdueLoans(pageable);
+        
+        model.addAttribute("overduePage", overduePage);
+        
+        return "admin/overdue-list"; // → templates/admin/overdue-list.html
     }
 }

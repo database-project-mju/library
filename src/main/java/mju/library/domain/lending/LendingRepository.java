@@ -5,7 +5,10 @@ import mju.library.domain.member.Member;
 import mju.library.domain.lending.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query; 
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,4 +34,7 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
 
     // (대출 한도 검사용) 특정 회원이 '대출중' 상태인 도서의 개수를 셉니다.
     long countByMemberAndStatus(Member member, LendingStatus status);
+
+    // ✅ [추가] (연체 현황 페이지용) 특정 상태의 대출 기록을 페이징하여 조회
+    Page<Lending> findByStatus(LendingStatus status, Pageable pageable);
 }

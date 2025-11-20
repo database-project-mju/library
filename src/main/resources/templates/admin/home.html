@@ -3,59 +3,93 @@
 <head>
     <title>관리자 홈</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .admin-card:hover {
+            transform: translateY(-3px);
+            transition: 0.2s;
+        }
+    </style>
 </head>
-<body class="container mt-4">
+
+<!-- 1. body는 하단 푸터 고정 -->
+<body class="bg-light d-flex flex-column min-vh-100">
 
     <div th:replace="~{fragments/nav :: navbar}"></div>
 
-    <h1 class="mb-4">관리자 대시보드</h1>
+    <!-- 2. container를 flex-column으로 변경, flex-grow-1로 화면 채우기 -->
+    <div class="container my-5 flex-grow-1 d-flex flex-column">
 
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card text-white bg-danger mb-3">
-                <div class="card-header">연체 현황</div>
-                <div class="card-body">
-                    <h2 class="card-title" th:text="${overdueCount} + '건'">0건</h2>
-                    <p class="card-text">현재 반납일이 지난 도서</p>
-                    <a href="/admin/lending" class="text-white">대출/반납 페이지 &raquo;</a>
+        <h1 class="fw-semibold mb-4">관리자 대시보드</h1>
+
+        <!-- 3. 첫 번째 row: flex-grow-1 (세로로 늘어남), mb-4 (아래쪽 간격) -->
+        <div class="row flex-grow-1 mb-4">
+            
+            <!-- 4. col: d-flex (자식인 card가 h-100을 쓸 수 있게 함) -->
+            <div class="col-md-6 d-flex">
+                <!-- 5. card: h-100 (높이 100%), w-100 (넓이 100%) -->
+                <div class="card text-white bg-info admin-card h-100 w-100">
+                    <div class="card-header fs-5 fw-semibold">대출 / 반납</div>
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold">바로가기</h2>
+                        <p class="card-text fs-5">학생의 대출/반납 처리를 진행합니다.</p>
+                        <a href="/admin/lending" class="text-white stretched-link fs-5">대출/반납 페이지 &raquo;</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 d-flex">
+                <div class="card text-white bg-danger admin-card h-100 w-100">
+                    <div class="card-header fs-5 fw-semibold">연체 현황</div>
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold" th:text="${overdueCount} + '건'">0건</h2>
+                        <p class="card-text fs-5">현재 반납일이 지난 도서</p>
+                        <a href="/admin/lending/overdue" class="text-white stretched-link fs-5">자세히 보기 &raquo;</a>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-3">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-header">총 회원</div>
-                <div class="card-body">
-                    <h2 class="card-title" th:text="${memberCount} + '명'">0명</h2>
-                    <p class="card-text">시스템에 등록된 총 회원</p>
-                    <a href="/admin/members" class="text-white">자세히 보기 &raquo;</a>
+        <!-- 3. 두 번째 row: flex-grow-1 (세로로 늘어남) -->
+        <div class="row flex-grow-1">
+            
+            <div class="col-md-4 d-flex">
+                <div class="card text-white bg-primary admin-card h-100 w-100">
+                    <div class="card-header fs-5 fw-semibold">총 회원</div>
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold" th:text="${memberCount} + '명'">0명</h2>
+                        <p class="card-text fs-5">시스템에 등록된 총 회원</p>
+                        <a href="/admin/members" class="text-white stretched-link fs-5">자세히 보기 &raquo;</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="card text-white bg-success mb-3">
-                <div class="card-header">총 도서</div>
-                <div class="card-body">
-                    <h2 class="card-title" th:text="${bookCount} + '권'">0권</h2>
-                    <p class="card-text">보유중인 전체 도서 수</p>
-                    <a href="/admin/books" class="text-white">자세히 보기 &raquo;</a>
+            <div class="col-md-4 d-flex">
+                <div class="card text-white bg-success admin-card h-100 w-100">
+                    <div class="card-header fs-5 fw-semibold">총 도서</div>
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold" th:text="${bookCount} + '권'">0권</h2>
+                        <p class="card-text fs-5">보유중인 전체 도서 수</p>
+                        <a href="/admin/books" class="text-white stretched-link fs-5">자세히 보기 &raquo;</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="card text-white bg-secondary mb-3">
-                <div class="card-header">총 리뷰</div>
-                <div class="card-body">
-                    <h2 class="card-title" th:text="${reviewCount} + '개'">0개</h2>
-                    <p class="card-text">작성된 전체 리뷰 수</p>
-                    <a href="/admin/reviews" class="text-white">자세히 보기 &raquo;</a>
+            <div class="col-md-4 d-flex">
+                <div class="card text-white bg-secondary admin-card h-100 w-100">
+                    <div class="card-header fs-5 fw-semibold">총 리뷰</div>
+                    <div class="card-body p-4">
+                        <h2 class="card-title fw-bold" th:text="${reviewCount} + '개'">0개</h2>
+                        <p class="card-text fs-5">작성된 전체 리뷰 수</p>
+                        <a href="/admin/reviews" class="text-white stretched-link fs-5">자세히 보기 &raquo;</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-    </div> <div th:replace="~{fragments/footer :: footer}"></div>
+        </div> 
+    
+    </div> <!-- container 닫기 -->
+    
+    <div th:replace="~{fragments/footer :: footer}"></div>
 
 </body>
 </html>
