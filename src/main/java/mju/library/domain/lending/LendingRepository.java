@@ -68,4 +68,4 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
     @Query("SELECT l FROM Lending l JOIN FETCH l.book WHERE l.member.studentNo = :studentNo AND l.returnDate IS NULL")
     List<Lending> findActiveLendsByStudentNo(@Param("studentNo") String studentNo);
 }
-}
+
