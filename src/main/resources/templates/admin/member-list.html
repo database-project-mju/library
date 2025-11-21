@@ -170,5 +170,19 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:inline="javascript">
+        /*<![CDATA[*/
+        
+        // 컨트롤러에서 보낸 메시지 받기
+        var message = /*[[${popupMessage}]]*/ null;
+        
+        // 메시지가 있으면 알림창 띄우기
+        if (message) {
+            alert(message);
+        }
+        
+        /*]]>*/
+    </script>
+
 </body>
 </html>

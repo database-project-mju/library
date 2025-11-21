@@ -105,16 +105,16 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="loan : ${overduePage.content}">
-                            <td class="ps-4 fw-bold" th:text="${loan.book.title}"></td>
+                        <tr th:each="lend : ${overduePage.content}">
+                            <td class="ps-4 fw-bold" th:text="${lend.book.title}"></td>
                             <td>
-                                <span th:text="${loan.member.name}"></span>
-                                <small class="text-muted ms-1" th:text="'(' + ${loan.member.studentNo} + ')'"></small>
+                                <span th:text="${lend.member.name}"></span>
+                                <small class="text-muted ms-1" th:text="'(' + ${lend.member.studentNo} + ')'"></small>
                             </td>
-                            <td th:text="${#temporals.format(loan.lendDate, 'yyyy-MM-dd')}"></td>
-                            <td class="text-danger fw-bold" th:text="${#temporals.format(loan.dueDate, 'yyyy-MM-dd')}"></td>
+                            <td th:text="${#temporals.format(lend.lendDate, 'yyyy-MM-dd')}"></td>
+                            <td class="text-danger fw-bold" th:text="${#temporals.format(lend.dueDate, 'yyyy-MM-dd')}"></td>
                             <td class="text-center">
-                                <a th:href="@{/admin/lending(studentNo=${loan.member.studentNo})}"
+                                <a th:href="@{/admin/lending(studentNo=${lend.member.studentNo})}"
                                    class="btn btn-sm btn-outline-danger">반납 처리</a>
                             </td>
                         </tr>

@@ -37,4 +37,14 @@ public class Member extends BaseEntity {
         this.password = encode;
 
     }
+
+    // 탈퇴 여부 필드
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    // 회원 탈퇴 처리 메서드
+    public void withdraw() {
+        this.isDeleted = true;  // 탈퇴한 상태. (로그인,조회차단)
+        this.password = "";     // 비밀번호 삭제 (접속 불가)
+    }
 }
