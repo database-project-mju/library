@@ -9,6 +9,7 @@ import mju.library.domain.lending.LendingStatus;
 import mju.library.domain.member.Member;
 import mju.library.domain.mypage.dto.LendingResDto;
 import mju.library.domain.mypage.dto.ReserveResDto;
+import mju.library.domain.mypage.dto.ReturnResDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

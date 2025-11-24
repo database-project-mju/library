@@ -9,6 +9,7 @@ import mju.library.domain.member.MemberService;
 import mju.library.domain.mypage.dto.LendingResDto;
 import mju.library.domain.mypage.dto.LikeResDto;
 import mju.library.domain.mypage.dto.ReserveResDto;
+import mju.library.domain.mypage.dto.ReturnResDto;
 import mju.library.domain.reservation.ReservationService;
 import mju.library.domain.review.Review;
 import mju.library.domain.review.ReviewService;
@@ -70,7 +71,28 @@ public class MyPageController {
         model.addAttribute("lendingListDto", lendingListDto);
 
         return "mypage/lends";
-    }    /**
+    }
+    /**
+     * 반납 목록 조회
+     */
+    @GetMapping("mypage/return")
+    public String returnList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @LoginMember Member member,
+            Model model
+    ) {
+        model.addAttribute("memberName", member.getName());
+
+        // ⭐ 서비스에서 DTO 완성해서 가져옴
+        ReturnResDto.ReturnListDto returnListDto = lendingService.returnListDto(member.getId(), page, size);
+
+        model.addAttribute("returnListDto", returnListDto);
+
+        return "mypage/return";
+    }
+
+    /*
      * 예약 목록 조회
      */
     @GetMapping("mypage/reserve")
@@ -89,7 +111,6 @@ public class MyPageController {
 
         return "mypage/reserve";
     }
-
 
 /**
      * 찜 목록 조회

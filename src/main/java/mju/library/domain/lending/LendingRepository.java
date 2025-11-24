@@ -55,4 +55,9 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
     Page<Lending> findByMemberIdFetch(@Param("memberId") Long memberId, Pageable pageable);
 
     Optional<Lending> findByIdAndMemberId(Long id, Long memberId);
+
+    @Query("SELECT COUNT(l) FROM Lending l " +
+            "WHERE l.member.id = :memberId AND l.book.id = :bookId")
+    long countByMemberWithBook(@Param("memberId") Long memberId,
+                               @Param("bookId") Long bookId);
 }

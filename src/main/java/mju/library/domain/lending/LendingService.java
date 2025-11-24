@@ -6,6 +6,7 @@ import mju.library.domain.book.BookRepository;
 import mju.library.domain.member.Member; 
 import mju.library.domain.member.MemberRepository;
 import mju.library.domain.mypage.dto.LendingResDto;
+import mju.library.domain.mypage.dto.ReturnResDto;
 import mju.library.domain.reservation.Reservation;
 import mju.library.domain.reservation.ReservationRepository; 
 import mju.library.domain.reservation.ReservationStatus;
@@ -183,6 +184,7 @@ public class LendingService {
                         .publishDate(l.getBook().getPublishDate())
                         .lendDate(LocalDate.from(l.getLendDate()))
                         .dueDate(LocalDate.from(l.getDueDate()))
+                        .extendable(l.isExtendable())
                         .build()
                 )
                 .toList();
@@ -207,5 +209,44 @@ public class LendingService {
         }
 
         lendingRepository.delete(lend);
+    }
+
+    public Page<Lending> findOverdueLoans(Pageable pageable) {
+
+        return null;
+    }
+
+    @Transactional
+    public void extendLend(Long lendId, Long memberId) {
+        Lending lend = lendingRepository.findByIdAndMemberId(lendId, memberId)
+                .orElseThrow(() -> new IllegalArgumentException("대출 정보를 찾을 수 없습니다."));
+        lend.extendLend();
+    }
+
+    @Transactional(readOnly = true)
+    public ReturnResDto.ReturnListDto returnListDto(Long memberId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Lending> lendListWithMember = lendingRepository.findByMemberIdFetch(memberId, pageable);
+        List<ReturnResDto.ReturnDto> returnDto = lendListWithMember.getContent().stream()
+                .map(l -> ReturnResDto.ReturnDto.builder()
+                        .lendId(l.getId())
+                        .bookId(l.getBook().getId())
+                        .bookName(l.getBook().getTitle())
+                        .bookAuthor(l.getBook().getPublisher())
+                        .publisher(l.getBook().getPublisher())
+                        .imageUrl(l.getBook().getImageUrl())
+                        .publishDate(l.getBook().getPublishDate())
+                        .lendDate(LocalDate.from(l.getLendDate()))
+                        .lendCount(lendingRepository.countByMemberWithBook(memberId,l.getBook().getId()))
+                        .build()
+                )
+                .toList();
+        return ReturnResDto.ReturnListDto.builder()
+                .totalCount((int) lendListWithMember.getTotalElements())
+                .totalPage(lendListWithMember.getTotalPages())
+                .currentPage(page)
+                .returnList(returnDto)
+                .build();
+
     }
 }

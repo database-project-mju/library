@@ -38,4 +38,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                 """
     )
     Page<Reservation> findByMemberIdFetch(@Param("memberId") Long memberId, Pageable pageable);
+
+
+
+
 }

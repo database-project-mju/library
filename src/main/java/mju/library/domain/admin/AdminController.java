@@ -225,7 +225,7 @@ public class AdminController {
             Model model) {
         
         Page<Lending> overduePage = lendingService.findOverdueLoans(pageable);
-        
+//
         model.addAttribute("overduePage", overduePage);
         
         return "admin/overdue-list"; // → templates/admin/overdue-list.html

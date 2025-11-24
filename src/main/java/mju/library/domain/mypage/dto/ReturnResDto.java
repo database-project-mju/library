@@ -8,24 +8,23 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.List;
 
-public class LendingResDto {
-
+public class ReturnResDto {
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class LendingListDto {
+    public static class ReturnListDto {
         private int totalCount;
         private int totalPage;
         private int currentPage;
-        private List<LendingDto> lendingList;
+        private List<ReturnResDto.ReturnDto> returnList;
     }
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class LendingDto {
+    public static class ReturnDto {
         private Long lendId;
         private Long bookId;
         private String bookName;
@@ -33,8 +32,7 @@ public class LendingResDto {
         private String publisher;
         private String imageUrl;
         private LocalDate publishDate;
+        private Long lendCount;
         private LocalDate lendDate;
-        private LocalDate dueDate;
-        private boolean extendable;
     }
 }
