@@ -4,94 +4,189 @@
     <meta charset="UTF-8">
     <title>관리자 - 대출/반납</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .sidebar {
+            width: 250px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding-top: 20px;
+            flex-shrink: 0;
+        }
+        .sidebar .menu-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            background-color: #e9ecef; 
+            border-radius: 10px;
+            text-align: center;
+        }
+        .sidebar .menu-category {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #6c757d;
+            padding: 10px 25px 5px;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+        .sidebar a {
+            padding: 10px 25px;
+            display: block;
+            font-size: 1rem;
+            color: #333;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background-color: #e9ecef;
+            color: #0d6efd;
+        }
+        .sidebar a.active {
+            background-color: #dbe4ff;
+            color: #0d6efd;
+            font-weight: bold;
+        }
+
+        .content-area {
+            padding: 40px;
+            width: 100%;
+        }
+
+        table th, table td {
+            vertical-align: middle;
+        }
+    </style>
 </head>
 
-<!-- ✅ 1. <body> 태그에 레이아웃 클래스 적용 -->
-<body class="bg-light d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100">
 
-    <!-- ✅ 2. 네비게이션 바 추가 -->
-    <div th:replace="~{fragments/nav :: navbar}"></div>
-    
-    <!-- ✅ 3. 콘텐츠 래퍼(Wrapper) 추가 -->
-    <div class="container my-5 flex-grow-1">
+<div th:replace="~{fragments/nav :: navbar}"></div>
 
-        <h1 class="fw-semibold mb-4">대출 / 반납</h1>
+<div class="d-flex flex-grow-1">
 
-        <div class="card p-3 mb-4 shadow-sm">
-            <h5 class="mb-3">1. 학생 검색</h5>
-            <form th:action="@{/admin/lending}" method="GET" class="d-flex">
-                <input type="text" name="studentNo" class="form-control me-2" 
-                       th:value="${searchedStudentNo}" placeholder="학번으로 검색" required>
-                <button type="submit" class="btn btn-primary">검색</button>
-            </form>
-            <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
-        </div>
+    <div class="sidebar">
+        <div class="menu-title">관리자 페이지</div>
 
-        <div th:if="${searchedStudentNo}">
+        <div class="menu-category">데스크 업무</div>
+        <a th:href="@{/admin/lending}" class="active">📅 대출 / 반납</a>
+        <a th:href="@{/admin/lending/overdue}">⚠️ 연체 현황</a>
 
-            <div class="card p-3 mb-4 shadow-sm">
-            <h5 class="mb-3" th:text="'2. ' + ${searchedStudentNo} + ' 님에게 도서 대출'"></h5>
-            <form th:action="@{/admin/checkout}" method="POST" class="d-flex">
-                <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
+        <div class="menu-category">회원 관리</div>
+        <a th:href="@{/admin/members}">👥 회원 조회 / 삭제</a>
+        <a th:href="@{/admin/members/new}">➕ 회원 추가</a>
 
-                <input type="text" name="bookIdentifier" class="form-control me-2" placeholder="대출할 도서 ID (또는 ISBN) 입력" required>
-                <button type="submit" class="btn btn-success">대출 실행</button>
-            </form>
+        <div class="menu-category">도서 관리</div>
+        <a th:href="@{/admin/books}">📚 도서 조회 / 삭제</a>
+        <a th:href="@{/admin/books/new}">➕ 도서 추가</a>
 
-            <!-- ✅ 3. Controller가 보낸 "checkoutError" 메시지를 이곳에 표시합니다. -->
-            <div th:if="${checkoutError}" 
-                class="alert alert-danger mt-3 mb-0" 
-                th:text="${checkoutError}">
-                <!-- (예: "이미 대출중인 도서입니다." 또는 "1인당 대출 가능 권수를 초과했습니다.") -->
+        <div class="menu-category">리뷰</div>
+        <a th:href="@{/admin/reviews}">💬 리뷰 관리</a>
+    </div>
+
+    <div class="content-area">
+        <div class="container-fluid">
+            
+            <h2 class="fw-semibold mb-4">대출 / 반납 처리</h2>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 ps-4">
+                    <h5 class="fw-bold mb-0">1. 학생 검색</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{/admin/lending}" method="GET" class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label for="studentNo" class="col-form-label fw-bold">학번 입력</label>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" id="studentNo" name="studentNo" class="form-control" 
+                                   th:value="${searchedStudentNo}" placeholder="학번을 입력하세요 (예: 602...)" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary px-4">검색</button>
+                        </div>
+                    </form>
+                    
+                    <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
+                </div>
             </div>
-        </div>
 
-            <div class="card p-3 shadow-sm">
-                <h5 class="mb-3" th:text="${searchedStudentNo} + ' 님의 현재 대출 목록'"></h5>
+            <div th:if="${searchedStudentNo}">
 
-                <div th:if="${#lists.isEmpty(activeLoans)}">
-                    <p class="text-muted">현재 대출중인 도서가 없습니다.</p>
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 ps-4">
+                        <h5 class="fw-bold mb-0" th:text="'2. ' + ${searchedStudentNo} + ' 님에게 도서 대출'"></h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/admin/checkout}" method="POST" class="row g-2 align-items-center">
+                            <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
+
+                            <div class="col-auto">
+                                <label for="bookIdentifier" class="col-form-label fw-bold">도서 ID (ISBN)</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" id="bookIdentifier" name="bookIdentifier" class="form-control" 
+                                       placeholder="바코드를 스캔하거나 번호를 입력하세요" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-success px-4">대출 실행</button>
+                            </div>
+                        </form>
+
+                        <div th:if="${checkoutError}" class="alert alert-danger mt-3 mb-0" th:text="${checkoutError}"></div>
+                    </div>
                 </div>
 
-                <table class="table" th:if="${!#lists.isEmpty(activeLoans)}">
-                    <thead class="table-light">
-                        <tr>
-                            <th>도서 제목</th>
-                            <th>대출일</th>
-                            <th>반납 예정일</th>
-                            <th>상태</th>
-                            <th>반납</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="loan : ${activeLoans}">
-                            <td th:text="${loan.book.title}"></td>
-                            <td th:text="${#temporals.format(loan.lendDate, 'yyyy-MM-dd')}"></td>
-                            <td th:text="${#temporals.format(loan.dueDate, 'yyyy-MM-dd')}"></td>
-                            <td>
-                                <span class="badge" 
-                                      th:classappend="${loan.status == T(mju.library.domain.lending.LendingStatus).OVERDUE} ? 'bg-danger' : 'bg-warning'"
-                                      th:text="${loan.status.korean}"></span>
-                            </td>
-                            <td>
-                                <form th:action="@{/admin/checkin}" method="POST">
-                                    <input type="hidden" name="lendingId" th:value="${loan.id}">
-                                    <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
-                                    <button type="submit" class="btn btn-primary btn-sm">반납</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom-0 pt-4 ps-4">
+                        <h5 class="fw-bold mb-0" th:text="${searchedStudentNo} + ' 님의 현재 대출 목록'"></h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${#lists.isEmpty(activeLends)}" class="p-4 text-muted text-center">
+                            현재 대출중인 도서가 없습니다.
+                        </div>
 
-    </div> <!-- ✅ 3. 콘텐츠 래퍼 닫기 -->
-    
-    <!-- ✅ 4. 푸터 추가 (<body> 닫기 직전) -->
-    <div th:replace="~{fragments/footer :: footer}"></div>
+                        <table class="table table-hover mb-0" th:if="${!#lists.isEmpty(activeLends)}">
+                            <thead class="table-light border-bottom">
+                                <tr>
+                                    <th class="ps-4">도서 제목</th>
+                                    <th>대출일</th>
+                                    <th>반납 예정일</th>
+                                    <th>상태</th>
+                                    <th class="text-center">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="lend : ${activeLends}">
+                                    <td class="ps-4 fw-bold" th:text="${lend.book.title}"></td>
+                                    <td th:text="${#temporals.format(lend.lendDate, 'yyyy-MM-dd')}"></td>
+                                    <td th:text="${#temporals.format(lend.dueDate, 'yyyy-MM-dd')}"></td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${lend.status == T(mju.library.domain.lending.LendingStatus).OVERDUE} ? 'bg-danger' : 'bg-warning text-dark'"
+                                              th:text="${lend.status.korean}"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <form th:action="@{/admin/checkin}" method="POST">
+                                            <input type="hidden" name="lendingId" th:value="${lend.id}">
+                                            <input type="hidden" name="studentNo" th:value="${searchedStudentNo}">
+                                            <button type="submit" class="btn btn-primary btn-sm" 
+                                                    onclick="return confirm('반납 처리하시겠습니까?');">반납</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-    <script th:inline="javascript">
+            </div> </div>
+    </div>
+
+</div> 
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:inline="javascript">
         /*<![CDATA[*/
         
         // 2. Controller가 '임시 가방'에 보낸 "popupMessage"를 가져옴
@@ -105,5 +200,6 @@
         
         /*]]>*/
     </script>
+
 </body>
 </html>

@@ -2,17 +2,12 @@ package mju.library.domain.lending;
 
 import mju.library.domain.book.Book;
 import mju.library.domain.member.Member;
-import mju.library.domain.lending.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query; 
-import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,19 +40,32 @@ public interface LendingRepository extends JpaRepository<Lending, Long> {
                 from Lending l
                 join fetch l.book
                 where l.member.id = :memberId
+                and l.status <> 'RETURNED'
                 """,
             countQuery = """
                 select count(l)
                 from Lending l
                 where l.member.id = :memberId
+                and l.status <> 'RETURNED'
                 """
     )
     Page<Lending> findByMemberIdFetch(@Param("memberId") Long memberId, Pageable pageable);
 
     Optional<Lending> findByIdAndMemberId(Long id, Long memberId);
 
+    // (연체 현황 페이지용) 특정 상태(연체) 목록 페이징 조회
+    @Query(value = "SELECT l FROM Lending l JOIN FETCH l.book JOIN FETCH l.member WHERE l.status = :status",
+           countQuery = "SELECT COUNT(l) FROM Lending l WHERE l.status = :status")
+    Page<Lending> findByStatus(@Param("status") LendingStatus status, Pageable pageable);
+
+    // ✅ [수정됨] 특정 학생의 '반납되지 않은(대출중/연체)' 목록을 조회 (책 정보까지 한 번에 가져옴)
+    // 이렇게 하면 Thymeleaf에서 lend.book.title을 호출해도 에러가 나지 않습니다.
+    @Query("SELECT l FROM Lending l JOIN FETCH l.book WHERE l.member.studentNo = :studentNo AND l.returnDate IS NULL")
+    List<Lending> findActiveLendsByStudentNo(@Param("studentNo") String studentNo);
+
     @Query("SELECT COUNT(l) FROM Lending l " +
             "WHERE l.member.id = :memberId AND l.book.id = :bookId")
     long countByMemberWithBook(@Param("memberId") Long memberId,
                                @Param("bookId") Long bookId);
 }
+

@@ -1,6 +1,8 @@
 package mju.library.domain.member;
 
 import lombok.RequiredArgsConstructor;
+import mju.library.domain.lending.LendingRepository; 
+import mju.library.domain.lending.LendingStatus;
 import mju.library.domain.member.dto.MemberResDto.MemberInfoDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final LendingRepository lendingRepository;
     private final PasswordEncoder passwordEncoder;
 
     // (R) 학생 목록 조회
@@ -23,7 +26,7 @@ public class MemberService {
         if (keyword != null && !keyword.trim().isEmpty()) {
             return memberRepository.findMembersByKeyword(keyword, pageable);
         } else {
-            return memberRepository.findAll(pageable);
+            return memberRepository.findAllByIsDeletedFalse(pageable);
         }
     }
 
@@ -50,11 +53,34 @@ public class MemberService {
         memberRepository.save(newMember);
     }
 
+    // (D) 회원 삭제(softdelete)
+    public void deleteMember(String studentNo) {
+        // 1. 회원 찾기 (이미 탈퇴한 회원은 조회 안 됨)
+        Member member = memberRepository.findByStudentNoAndIsDeletedFalse(studentNo)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 이미 탈퇴한 회원입니다."));
+
+        // 2. 반납하지 않은 도서가 있는지 확인
+        long activeLoanCount = lendingRepository.countByMemberAndStatus(member, LendingStatus.BORROWED);
+        if (activeLoanCount > 0) {
+            throw new IllegalStateException("반납하지 않은 도서가 있어 탈퇴시킬 수 없습니다.");
+        }
+        
+        // 연체된 도서도 확인 (선택 사항)
+        long overdueCount = lendingRepository.countByMemberAndStatus(member, LendingStatus.OVERDUE);
+        if (overdueCount > 0) {
+            throw new IllegalStateException("연체된 도서가 있어 탈퇴시킬 수 없습니다.");
+        }
+
+        // 3. 논리적 삭제 실행 (Member 엔티티의 withdraw 호출)
+        // 학번은 난수로 변경되고, 이름은 유지됨
+        member.withdraw();
+    }
+
     // (R) 관리자 대시보드용 '총 회원 수' 조회 
     @Transactional(readOnly = true)
     public long getMemberCount() {
         // JpaRepository의 기본 'count' 기능을 호출합니다.
-        return memberRepository.count();
+        return memberRepository.countByIsDeletedFalse();
     }
     @Transactional(readOnly = true)
     public MemberInfoDto getMemberInfo(Long memberId) {

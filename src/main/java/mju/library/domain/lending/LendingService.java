@@ -33,7 +33,7 @@ public class LendingService {
     private final MemberRepository memberRepository; 
     private final BookRepository bookRepository; 
     private final ReservationRepository reservationRepository;
-    private static final int MAX_LOAN_COUNT = 3;
+    private static final int MAX_LEND_COUNT = 3;
 
     // [관리자 대시보드] (R) 연체 건수 조회
     @Transactional(readOnly = true)
@@ -43,15 +43,12 @@ public class LendingService {
 
     //[관리자 대출/반납] (R) 학생의 현재 대출/연체 목록 조회
     @Transactional(readOnly = true)
-    public List<Lending> findActiveLoansByMember(String studentNo) {
+    public List<Lending> findActiveLendsByMember(String studentNo) {
         // 1. 학번으로 Member 객체를 찾음
         Member member = memberRepository.findByStudentNo(studentNo)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학번입니다."));
 
-        // 2. '대출중'이거나 '연체' 상태인 것만 조회
-        List<LendingStatus> statuses = Arrays.asList(LendingStatus.BORROWED, LendingStatus.OVERDUE);
-        // 3. 2단계에서 만든 Repository 메서드 호출
-        return lendingRepository.findByMemberAndStatusIn(member, statuses);
+        return lendingRepository.findActiveLendsByStudentNo(studentNo);
     }
 
     // [관리자 대출/반납] (C) 대출 처리
@@ -68,10 +65,10 @@ public class LendingService {
         }
         
         // [ ✨ 2. (TODO 해결!) 1인당 대출 가능 권수 제한 로직 추가 ✨ ]
-        long currentLoanCount = lendingRepository.countByMemberAndStatus(member, LendingStatus.BORROWED);
+        long currentLendCount = lendingRepository.countByMemberAndStatus(member, LendingStatus.BORROWED);
         
-        if (currentLoanCount >= MAX_LOAN_COUNT) {
-            throw new IllegalArgumentException(member.getName() + "님은 현재 " + currentLoanCount + "권을 대출 중입니다. (최대 " + MAX_LOAN_COUNT + "권)");
+        if (currentLendCount >= MAX_LEND_COUNT) {
+            throw new IllegalArgumentException(member.getName() + "님은 현재 " + currentLendCount + "권을 대출 중입니다. (최대 " + MAX_LEND_COUNT + "권)");
         }
 
         // 3. 이 책에 대해 '대출 가능'(READY) 상태인 예약이 있는지 확인
@@ -150,6 +147,9 @@ public class LendingService {
         // 1. 책 반납 처리 (Lending 테이블 UPDATE)
         lending.returnBook(); 
 
+        // 반납상태 DB 저장
+        lendingRepository.save(lending);
+
         // 2. 예약자 확인
         Optional<Reservation> reservationOpt = reservationRepository
             .findWaitingReservation(lending.getBook(), ReservationStatus.WAITING);
@@ -166,6 +166,17 @@ public class LendingService {
         // 4. 예약자가 없으면 '빈 상자'를 반환
         return Optional.empty();
     }
+
+
+    // [관리자 연체 현황] (R) 연체중인 대출 목록 페이징 조회
+    @Transactional(readOnly = true)
+    public Page<Lending> findOverdueLends(Pageable pageable) {
+        // '연체' 상태인 것만 조회
+        return lendingRepository.findByStatus(LendingStatus.OVERDUE, pageable);
+    }
+
+
+
 
     @Transactional(readOnly = true)
     public LendingResDto.LendingListDto getLendList(Long memberId, int page, int size) {

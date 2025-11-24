@@ -92,7 +92,25 @@ public class AdminController {
         return "redirect:/admin/members"; // 학생 목록으로 새로고침
     }
 
-    // TODO: 학생 삭제 시 데이터 무결성 문제 발생 (논의 후 추가)
+    // (D) 회원 삭제 (논리적 삭제)
+    @PostMapping("/admin/members/delete")
+    public String deleteMember(@RequestParam("studentNo") String studentNo,
+                               RedirectAttributes rttr) {
+        try {
+            memberService.deleteMember(studentNo);
+
+            // 성공 시 메시지
+            rttr.addFlashAttribute("popupMessage", "회원 삭제(탈퇴) 처리가 완료되었습니다.");
+
+        } catch (IllegalStateException e) {
+            // 실패 시 (대출 중인 도서 있음) 메시지
+            // e.getMessage() -> "반납하지 않은 도서가 있어..."
+            rttr.addFlashAttribute("popupMessage", e.getMessage());
+        }
+
+        // 다시 회원 목록 페이지로 리다이렉트
+        return "redirect:/admin/members";
+    }
 
     @GetMapping("/admin/reviews")
     public String getReviewListPage(
@@ -125,8 +143,8 @@ public class AdminController {
         if (studentNo != null && !studentNo.trim().isEmpty()) {
             try {
                 // 학생의 현재 대출 목록 조회
-                List<Lending> activeLoans = lendingService.findActiveLoansByMember(studentNo);
-                model.addAttribute("activeLoans", activeLoans); // 대출 목록
+                List<Lending> activeLends = lendingService.findActiveLendsByMember(studentNo);
+                model.addAttribute("activeLends", activeLends); // 대출 목록
                 model.addAttribute("searchedStudentNo", studentNo); // 검색한 학번
             } catch (IllegalArgumentException e) {
                 model.addAttribute("errorMessage", e.getMessage()); // "존재하지 않는 학번"
@@ -224,8 +242,8 @@ public class AdminController {
             @PageableDefault(size = 10, sort = "dueDate", direction = Sort.Direction.ASC) Pageable pageable,
             Model model) {
         
-        Page<Lending> overduePage = lendingService.findOverdueLoans(pageable);
-//
+        Page<Lending> overduePage = lendingService.findOverdueLends(pageable);
+        
         model.addAttribute("overduePage", overduePage);
         
         return "admin/overdue-list"; // → templates/admin/overdue-list.html
