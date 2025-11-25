@@ -211,4 +211,66 @@ public class BookService {
     public long getBookCount() {
         return bookRepository.count();
     }
+
+    public Page<BookSearchResponse> searchByCategory(Category category,
+                                                     Pageable pageable,
+                                                     Member currentMember) {
+
+        Page<Book> bookPage = bookRepository.findByCategory(category, pageable);
+        return convertToSearchResponse(bookPage, currentMember);
+    }
+
+    public Page<BookSearchResponse> searchByCategoryAndKeyword(Category category,
+                                                               String keyword,
+                                                               Pageable pageable,
+                                                               Member currentMember) {
+
+        // 제목 기준 검색
+        Page<Book> bookPage = bookRepository.findByCategoryAndTitleContainingIgnoreCase(
+                category, keyword, pageable);
+
+        // 제목 검색 결과 없으면 → 저자 검색
+        if (bookPage.isEmpty()) {
+            bookPage = bookRepository.findByCategoryAndWriterContainingIgnoreCase(
+                    category, keyword, pageable);
+        }
+
+        return convertToSearchResponse(bookPage, currentMember);
+    }
+
+    private Page<BookSearchResponse> convertToSearchResponse(Page<Book> bookPage,
+                                                             Member currentMember) {
+
+        Set<Long> likedBookIds = (currentMember != null)
+                ? likeBookRepository.findBookIdsByMemberId(currentMember.getId())
+                : new HashSet<>();
+
+        return bookPage.map(book -> {
+
+            boolean isBorrowed = lendingRepository.existsByBookIdAndStatus(book.getId(), LendingStatus.BORROWED);
+            boolean hasReservation = reservationRepository.existsByBookId(book.getId());
+
+            boolean isMyBorrowedBook = (currentMember != null)
+                    && lendingRepository.existsByBookIdAndMemberIdAndStatus(book.getId(), currentMember.getId(), LendingStatus.BORROWED);
+
+            boolean canReserve = isBorrowed && !hasReservation && !isMyBorrowedBook;
+
+            String lendStatus = isBorrowed ? "대출중" : "대출가능";
+            boolean liked = likedBookIds.contains(book.getId());
+
+            return BookSearchResponse.builder()
+                    .id(book.getId())
+                    .title(book.getTitle())
+                    .writer(book.getWriter())
+                    .publisher(book.getPublisher())
+                    .publishDate(book.getPublishDate())
+                    .imageUrl(book.getImageUrl())
+                    .description(book.getDescription())
+                    .lendStatus(lendStatus)
+                    .canReserve(canReserve)
+                    .liked(liked)
+                    .build();
+        });
+    }
+
 }

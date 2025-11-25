@@ -46,6 +46,7 @@ public class BookController {
     @GetMapping("/book/search")
     public String searchBooks(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Category category,   // ✅ 추가
             @RequestParam(defaultValue = "0") int page,
             @LoginMember Member member,
             Model model
@@ -53,21 +54,34 @@ public class BookController {
         Pageable pageable = PageRequest.of(page, 8);
 
         try {
-            Page<BookSearchResponse> results = bookService.searchBooks(keyword, pageable, member); // ✅ 로그인 정보 전달
+            Page<BookSearchResponse> results;
+
+            // 1) 카테고리만 검색
+            if (category != null && (keyword == null || keyword.isBlank())) {
+                results = bookService.searchByCategory(category, pageable, member);
+            }
+            // 2) 카테고리 + 검색어
+            else if (category != null && keyword != null) {
+                results = bookService.searchByCategoryAndKeyword(category, keyword, pageable, member);
+            }
+            // 3) 기존 검색
+            else {
+                results = bookService.searchBooks(keyword, pageable, member);
+            }
 
             model.addAttribute("searchResults", results.getContent());
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", results.getTotalPages());
             model.addAttribute("keyword", keyword);
-            model.addAttribute("message", results.isEmpty() ? "검색 결과가 없습니다." : null);
+            model.addAttribute("category", category);
+
+            if (results.isEmpty()) {
+                model.addAttribute("message", "검색 결과가 없습니다.");
+            }
 
         } catch (IllegalArgumentException e) {
+            // ❗ 서비스 레벨 에러 메시지를 그대로 뷰로 전달
             model.addAttribute("message", e.getMessage());
-        }
-
-        // 로그인된 사용자 정보 전달 - nav에 띄울 이름
-        if (member != null) {
-            model.addAttribute("memberName", member.getName());
         }
 
         return "book/search";
