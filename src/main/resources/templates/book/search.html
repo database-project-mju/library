@@ -66,6 +66,10 @@
     <div class="text-center mb-4">
         <h3 class="fw-bold text-primary">🔍 도서 검색 결과</h3>
         <p class="text-secondary mt-2" th:if="${keyword}" th:text="'검색어: ' + ${keyword}"></p>
+        <!-- ✅ 카테고리 표시 추가 -->
+        <p class="text-secondary mt-2" th:if="${category}"
+           th:text="'카테고리: ' + ${category.korean}">
+        </p>
     </div>
 
     <div th:if="${message}" class="alert alert-warning text-center mt-4" role="alert">
@@ -128,19 +132,30 @@
     <!-- 페이지네이션 -->
     <nav th:if="${totalPages > 1}" class="mt-4">
         <ul class="pagination justify-content-center">
+
+            <!-- 이전 버튼 -->
             <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/book/search(keyword=${keyword}, page=${currentPage - 1})}">이전</a>
+                   th:href="@{/book/search(keyword=${keyword}, category=${category}, page=${currentPage - 1})}">
+                    이전
+                </a>
             </li>
+
             <li class="page-item disabled">
                 <span class="page-link" th:text="${currentPage + 1} + ' / ' + ${totalPages}"></span>
             </li>
+
+            <!-- 다음 버튼 -->
             <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/book/search(keyword=${keyword}, page=${currentPage + 1})}">다음</a>
+                   th:href="@{/book/search(keyword=${keyword}, category=${category}, page=${currentPage + 1})}">
+                    다음
+                </a>
             </li>
+
         </ul>
     </nav>
+
 </div>
 
 <!-- ✅ 공통 footer -->

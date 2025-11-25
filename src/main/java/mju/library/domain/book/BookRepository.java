@@ -55,4 +55,16 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     // ISBN으로 도서를 찾는 메소드
     Optional<Book> findByIsbn(String isbn);
+
+    // 카테고리만 검색
+    Page<Book> findByCategory(Category category, Pageable pageable);
+
+    // 카테고리 + 제목 검색
+    Page<Book> findByCategoryAndTitleContainingIgnoreCase(
+            Category category, String title, Pageable pageable);
+
+    // 카테고리 + 저자 검색
+    Page<Book> findByCategoryAndWriterContainingIgnoreCase(
+            Category category, String writer, Pageable pageable);
+
 }

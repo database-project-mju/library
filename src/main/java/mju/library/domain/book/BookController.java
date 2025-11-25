@@ -46,26 +46,38 @@ public class BookController {
     @GetMapping("/book/search")
     public String searchBooks(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Category category,   // ✅ 추가
             @RequestParam(defaultValue = "0") int page,
             @LoginMember Member member,
             Model model
     ) {
         Pageable pageable = PageRequest.of(page, 8);
 
-        try {
-            Page<BookSearchResponse> results = bookService.searchBooks(keyword, pageable, member); // ✅ 로그인 정보 전달
+        Page<BookSearchResponse> results;
 
-            model.addAttribute("searchResults", results.getContent());
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", results.getTotalPages());
-            model.addAttribute("keyword", keyword);
-            model.addAttribute("message", results.isEmpty() ? "검색 결과가 없습니다." : null);
-
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("message", e.getMessage());
+        // 🔍 Case 1: category만 존재
+        if (category != null && (keyword == null || keyword.isBlank())) {
+            results = bookService.searchByCategory(category, pageable, member);
+        }
+        // 🔍 Case 2: category + keyword 동시 검색
+        else if (category != null && keyword != null && keyword.length() >= 2) {
+            results = bookService.searchByCategoryAndKeyword(category, keyword, pageable, member);
+        }
+        // 🔍 Case 3: 기존 검색
+        else {
+            results = bookService.searchBooks(keyword, pageable, member);
         }
 
-        // 로그인된 사용자 정보 전달 - nav에 띄울 이름
+        model.addAttribute("searchResults", results.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", results.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("category", category); // ✅ 추가
+
+        if (results.isEmpty()) {
+            model.addAttribute("message", "검색 결과가 없습니다.");
+        }
+
         if (member != null) {
             model.addAttribute("memberName", member.getName());
         }
