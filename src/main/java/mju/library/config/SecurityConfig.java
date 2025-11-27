@@ -16,6 +16,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
                         // .requestMatchers("/book/**", "/reservation/**").permitAll()
+                        // ⭐ 희망도서 목록: 누구나 접근 가능
+                        .requestMatchers( "/wish-book/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/student/**").hasAnyRole("ADMIN", "STUDENT")
                         .anyRequest().authenticated()
