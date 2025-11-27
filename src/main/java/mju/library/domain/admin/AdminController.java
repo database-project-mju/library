@@ -9,7 +9,11 @@ import mju.library.domain.member.Member;
 import mju.library.domain.member.MemberRole;
 import mju.library.domain.member.MemberService;
 import mju.library.domain.review.Review; 
-import mju.library.domain.review.ReviewService; 
+import mju.library.domain.review.ReviewService;
+import mju.library.domain.wish.WishBook;
+import mju.library.domain.wish.WishBookService;
+import mju.library.domain.wish.WishBookStatus;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort; 
@@ -34,12 +38,14 @@ public class AdminController {
     private final ReviewService reviewService;
     private final LendingService lendingService;
     private final BookService bookService;
+    private final WishBookService wishBookService;
 
-    public AdminController(MemberService memberService, ReviewService reviewService, LendingService lendingService, BookService bookService) {
+    public AdminController(MemberService memberService, ReviewService reviewService, LendingService lendingService, BookService bookService, WishBookService wishBookService) {
         this.memberService = memberService;
         this.reviewService = reviewService;
         this.lendingService = lendingService;
         this.bookService = bookService;
+        this.wishBookService = wishBookService;
     }
 
     @GetMapping("/admin")
@@ -247,5 +253,29 @@ public class AdminController {
         model.addAttribute("overduePage", overduePage);
         
         return "admin/overdue-list"; // → templates/admin/overdue-list.html
+    }
+
+    // (R) 희망도서 목록
+    @GetMapping("/admin/wish-books")
+    public String adminWishBookList(@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+                                    Model model) {
+        Page<WishBook> wishPage = wishBookService.getWishBookList(pageable);
+        model.addAttribute("wishPage", wishPage);
+        return "admin/wish-list"; // templates/admin/wish-list.html
+    }
+
+    // (D) 희망도서 삭제
+    @PostMapping("/admin/wish-books/delete")
+    public String deleteWishBook(@RequestParam Long id) {
+        wishBookService.deleteWishBook(id);
+        return "redirect:/admin/wish-books";
+    }
+
+    // (U) 관리자 - 희망도서 상태 변경 (배송중/입고완료 처리)
+    @PostMapping("/admin/wish-books/status")
+    public String updateWishBookStatus(@RequestParam Long id, 
+                                       @RequestParam WishBookStatus status) {
+        wishBookService.updateStatus(id, status);
+        return "redirect:/admin/wish-books";
     }
 }
