@@ -22,7 +22,7 @@ public class WishBook extends BaseEntity {
     private String title;
 
     @Column(nullable = false)
-    private String author;
+    private String writer;
 
     // 구매 링크
     @Column(nullable = false, length = 2000) 
@@ -59,7 +59,7 @@ public class WishBook extends BaseEntity {
     private String deliveryUrl;
 
     // 기부 신청 메서드 (정보 업데이트 + 상태 변경)
-    public void confirmDonation(String donorName, String donorPhone) {
+    public void confirmDonation(String donorName, String donorPhone, String deliveryUrl) {
         this.donorName = donorName;
         this.donorPhone = donorPhone;
         this.deliveryUrl = deliveryUrl;

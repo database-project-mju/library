@@ -48,13 +48,13 @@ public class WishBookController {
     @PostMapping("/wish-book/new")
     public String processRequest(@LoginMember Member member,
                                  @RequestParam String title,
-                                 @RequestParam String author,
+                                 @RequestParam String writer,
                                  @RequestParam String url) { // publisher, reason 삭제 -> url 추가
         if (member == null) {
             return "redirect:/login";
         }
         // 서비스 호출 시 url 전달
-        wishBookService.requestWishBook(member.getId(), title, author, url);
+        wishBookService.requestWishBook(member.getId(), title, writer, url);
         return "redirect:/wish-book";
     }
 

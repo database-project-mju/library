@@ -195,7 +195,6 @@ public class LendingService {
                         .publishDate(l.getBook().getPublishDate())
                         .lendDate(LocalDate.from(l.getLendDate()))
                         .dueDate(LocalDate.from(l.getDueDate()))
-                        .extendable(l.isExtendable())
                         .build()
                 )
                 .toList();
@@ -225,13 +224,6 @@ public class LendingService {
     public Page<Lending> findOverdueLoans(Pageable pageable) {
 
         return null;
-    }
-
-    @Transactional
-    public void extendLend(Long lendId, Long memberId) {
-        Lending lend = lendingRepository.findByIdAndMemberId(lendId, memberId)
-                .orElseThrow(() -> new IllegalArgumentException("대출 정보를 찾을 수 없습니다."));
-        lend.extendLend();
     }
 
     @Transactional(readOnly = true)

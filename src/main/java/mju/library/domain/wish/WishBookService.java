@@ -17,14 +17,14 @@ public class WishBookService {
     private final MemberRepository memberRepository;
 
     // (C) 희망도서 신청 
-    public void requestWishBook(Long memberId, String title, String author, String url) {
+    public void requestWishBook(Long memberId, String title, String writer, String url) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         WishBook wishBook = WishBook.builder()
                 .member(member)
                 .title(title)
-                .author(author)
+                .writer(writer)
                 .url(url) 
                 .build();
 
@@ -47,7 +47,7 @@ public class WishBookService {
         }
 
         // 엔티티의 메서드 호출
-        wishBook.confirmDonation(donorName, donorPhone);
+        wishBook.confirmDonation(donorName, donorPhone, deliveryUrl);
     }
 
     // (D) 삭제 (관리자용)

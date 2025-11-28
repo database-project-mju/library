@@ -34,9 +34,6 @@ public class Lending extends BaseEntity {
     private LocalDateTime dueDate;
     private LocalDateTime returnDate;
 
-    @Builder.Default
-    boolean extendable = true;
-
     @Enumerated(EnumType.STRING)
     private LendingStatus status;
 
@@ -45,10 +42,4 @@ public class Lending extends BaseEntity {
         this.returnDate = LocalDateTime.now();
     }
 
-    public void extendLend() {
-        if (this.extendable) {
-            this.extendable = false;
-            dueDate = dueDate.plusDays(7);
-        }
-    }
 }
