@@ -40,7 +40,7 @@
                     <tbody>
                         <tr th:each="item : ${wishPage.content}">
                             <td class="ps-4 fw-bold" th:text="${item.title}"></td>
-                            <td th:text="${item.author}"></td>
+                            <td th:text="${item.writer}"></td>
                             <td>
                                 <a th:href="${item.url}" target="_blank" class="btn btn-sm btn-outline-secondary">
                                     구매처 🔗

@@ -15,14 +15,4 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class LendingController {
     private final LendingService lendingService;
 
-    @PostMapping("/lend/extend")
-    public String extendLend(
-            @LoginMember Member member,
-            @RequestParam Long lendId) {
-        lendingService.extendLend(lendId, member.getId());
-        return "redirect:/mypage/lends";
-    }
-
-
-
 }
